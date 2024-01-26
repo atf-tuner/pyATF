@@ -1,8 +1,8 @@
 import random
 from typing import Set, Dict, Optional
 
-from atf.search_techniques.search_technique import SearchTechnique
-from atf.tuning_data import Cost, Coordinates
+from pyatf.search_techniques.search_technique import SearchTechnique
+from pyatf.tuning_data import Cost, Coordinates
 
 
 class Random(SearchTechnique):

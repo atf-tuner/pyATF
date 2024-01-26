@@ -1,4 +1,4 @@
-from atf.tuning_data import TuningData
+from pyatf.tuning_data import TuningData
 
 
 class AbortCondition:

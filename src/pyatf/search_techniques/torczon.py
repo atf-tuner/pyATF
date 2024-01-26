@@ -4,8 +4,8 @@ import random
 from enum import Enum
 from typing import Set, Dict, Optional
 
-from atf.search_techniques.search_technique import SearchTechnique
-from atf.tuning_data import Cost, Coordinates
+from pyatf.search_techniques.search_technique import SearchTechnique
+from pyatf.tuning_data import Cost, Coordinates
 
 INIT_SIMPLEX_NORMALIZED_SIDE_LENGTH = 0.1  # in (0,0.5]
 

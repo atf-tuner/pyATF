@@ -1,6 +1,6 @@
 from typing import Set, Dict
 
-from atf.tuning_data import Cost, Coordinates
+from pyatf.tuning_data import Cost, Coordinates
 
 
 class SearchTechnique:

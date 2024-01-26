@@ -3,9 +3,9 @@ import operator
 import random
 from typing import Set, Dict, Iterable, Optional, List
 
-from atf.search_techniques import SimulatedAnnealing, PatternSearch, Torczon
-from atf.search_techniques.search_technique import SearchTechnique
-from atf.tuning_data import Coordinates, Cost
+from pyatf.search_techniques import SimulatedAnnealing, PatternSearch, Torczon
+from pyatf.search_techniques.search_technique import SearchTechnique
+from pyatf.tuning_data import Coordinates, Cost
 
 DEFAULT_C = 0.05
 DEFAULT_WINDOW_SIZE = 500

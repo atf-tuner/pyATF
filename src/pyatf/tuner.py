@@ -6,14 +6,14 @@ from math import floor, ceil
 from pathlib import Path
 from typing import Optional, Tuple, Union, TextIO, Set, Dict
 
-from atf.abort_conditions import Evaluations
-from atf.abort_conditions.abort_condition import AbortCondition
-from atf.search_space import SearchSpace
-from atf.search_techniques import AUCBandit
-from atf.search_techniques.search_technique import SearchTechnique
-from atf.search_techniques.search_technique_1d import SearchTechnique1D
-from atf.tp import TP
-from atf.tuning_data import Cost, TuningData, CostFunction, Coordinates, Index, CostFunctionError
+from pyatf.abort_conditions import Evaluations
+from pyatf.abort_conditions.abort_condition import AbortCondition
+from pyatf.search_space import SearchSpace
+from pyatf.search_techniques import AUCBandit
+from pyatf.search_techniques.search_technique import SearchTechnique
+from pyatf.search_techniques.search_technique_1d import SearchTechnique1D
+from pyatf.tp import TP
+from pyatf.tuning_data import Cost, TuningData, CostFunction, Coordinates, Index, CostFunctionError
 
 # register SIGINT handler to gracefully terminate tuning run early
 SIGINT_handlers = set()

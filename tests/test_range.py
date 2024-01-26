@@ -1,6 +1,6 @@
 import unittest
 
-from atf.range import Interval, Set
+from pyatf.range import Interval, Set
 
 
 class TestInterval(unittest.TestCase):

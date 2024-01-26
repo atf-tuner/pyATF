@@ -2,8 +2,8 @@ from datetime import timedelta, datetime
 from math import ceil
 from typing import Optional
 
-from atf.abort_conditions.abort_condition import AbortCondition
-from atf.tuning_data import TuningData
+from pyatf.abort_conditions.abort_condition import AbortCondition
+from pyatf.tuning_data import TuningData
 
 
 class Speedup(AbortCondition):

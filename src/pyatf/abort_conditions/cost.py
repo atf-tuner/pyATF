@@ -1,5 +1,5 @@
-from atf.abort_conditions.abort_condition import AbortCondition
-from atf.tuning_data import TuningData, Cost as TuningDataCost
+from pyatf.abort_conditions.abort_condition import AbortCondition
+from pyatf.tuning_data import TuningData, Cost as TuningDataCost
 
 
 class Cost(AbortCondition):

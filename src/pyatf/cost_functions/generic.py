@@ -3,7 +3,7 @@ import subprocess
 import time
 from typing import Optional, Any, Dict, Tuple
 
-from atf.tuning_data import Configuration, CostFunctionError, Cost, MetaData
+from pyatf.tuning_data import Configuration, CostFunctionError, Cost, MetaData
 
 
 class CostFunction:

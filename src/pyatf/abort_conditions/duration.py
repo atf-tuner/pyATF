@@ -1,8 +1,8 @@
 from datetime import timedelta, datetime
 from math import ceil
 
-from atf.abort_conditions.abort_condition import AbortCondition
-from atf.tuning_data import TuningData
+from pyatf.abort_conditions.abort_condition import AbortCondition
+from pyatf.tuning_data import TuningData
 
 
 class Duration(AbortCondition):

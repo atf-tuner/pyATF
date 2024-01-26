@@ -6,8 +6,8 @@ from typing import Union, Tuple, Callable, Optional, Set, Dict, Iterable
 import numpy
 import pyopencl as cl
 
-from atf.result_check import equality
-from atf.tuning_data import Configuration, Cost, MetaData, CostFunctionError
+from pyatf.result_check import equality
+from pyatf.tuning_data import Configuration, Cost, MetaData, CostFunctionError
 
 
 def get_device(platform_id: int = 0, device_id: int = 0) -> cl.Device:

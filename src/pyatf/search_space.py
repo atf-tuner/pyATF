@@ -4,9 +4,9 @@ from functools import reduce
 from math import ceil, floor
 from typing import List, Optional, Any, SupportsIndex, Dict, Set, Tuple, Union
 
-from atf.range import Range
-from atf.tp import TP
-from atf.tuning_data import Configuration, Index, Coordinates
+from pyatf.range import Range
+from pyatf.tp import TP
+from pyatf.tuning_data import Configuration, Index, Coordinates
 
 
 class Node:

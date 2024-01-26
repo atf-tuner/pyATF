@@ -1,8 +1,8 @@
 from typing import Set, Dict, Iterable, Optional
 
-from atf.search_techniques import SimulatedAnnealing, PatternSearch, Torczon, DifferentialEvolution
-from atf.search_techniques.search_technique import SearchTechnique
-from atf.tuning_data import Coordinates, Cost
+from pyatf.search_techniques import SimulatedAnnealing, PatternSearch, Torczon, DifferentialEvolution
+from pyatf.search_techniques.search_technique import SearchTechnique
+from pyatf.tuning_data import Coordinates, Cost
 
 
 class RoundRobin(SearchTechnique):

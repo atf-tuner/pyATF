@@ -1,7 +1,7 @@
 import time
 from typing import Type, Tuple, Any, Optional, Dict
 
-from atf.tuning_data import Configuration, Cost
+from pyatf.tuning_data import Configuration, Cost
 
 
 class CostFunction:

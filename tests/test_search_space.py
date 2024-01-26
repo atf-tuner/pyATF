@@ -1,9 +1,9 @@
 import unittest
 from typing import Dict, List, Any, Tuple, Union, Sequence
 
-from atf.range import Interval, Set
-from atf.search_space import Node, SearchSpace, ChainOfTrees
-from atf.tp import TP
+from pyatf.range import Interval, Set
+from pyatf.search_space import Node, SearchSpace, ChainOfTrees
+from pyatf.tp import TP
 
 
 class TestNode(unittest.TestCase):

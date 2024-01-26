@@ -1,7 +1,7 @@
 import inspect
 from typing import Callable, Optional
 
-from atf.range import Range
+from pyatf.range import Range
 
 
 class TP:

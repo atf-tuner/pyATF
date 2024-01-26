@@ -3,12 +3,12 @@ import unittest
 from datetime import datetime
 from typing import Tuple, Optional, Dict
 
-from atf.abort_conditions import Evaluations
-from atf.range import Interval
-from atf.search_space import SearchSpace
-from atf.search_techniques import Random
-from atf.tp import TP
-from atf.tuning_data import TuningData, Configuration, Cost, History, Coordinates, Index
+from pyatf.abort_conditions import Evaluations
+from pyatf.range import Interval
+from pyatf.search_space import SearchSpace
+from pyatf.search_techniques import Random
+from pyatf.tp import TP
+from pyatf.tuning_data import TuningData, Configuration, Cost, History, Coordinates, Index
 
 
 class TestTuningData(unittest.TestCase):

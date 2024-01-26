@@ -3,8 +3,8 @@ import random
 from enum import Enum
 from typing import Set, Dict, Optional, List
 
-from atf.search_techniques.search_technique import SearchTechnique
-from atf.tuning_data import Cost, Coordinates
+from pyatf.search_techniques.search_technique import SearchTechnique
+from pyatf.tuning_data import Cost, Coordinates
 
 
 def interp(a: float, b: float, t: float):

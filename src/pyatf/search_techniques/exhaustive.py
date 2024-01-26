@@ -1,7 +1,7 @@
 from typing import Set, Dict, Optional
 
-from atf.search_techniques.search_technique_1d import SearchTechnique1D
-from atf.tuning_data import Cost, Index
+from pyatf.search_techniques.search_technique_1d import SearchTechnique1D
+from pyatf.tuning_data import Cost, Index
 
 
 class Exhaustive(SearchTechnique1D):

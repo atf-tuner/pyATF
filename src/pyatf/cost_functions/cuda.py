@@ -6,8 +6,8 @@ from typing import Union, Tuple, Callable, Optional, Set, Dict, Iterable, Any
 import numpy
 from cuda import cuda, nvrtc
 
-from atf.result_check import equality
-from atf.tuning_data import Configuration, Cost, MetaData, CostFunctionError
+from pyatf.result_check import equality
+from pyatf.tuning_data import Configuration, Cost, MetaData, CostFunctionError
 
 cuda.cuInit(0)
 
