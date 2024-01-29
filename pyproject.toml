@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "pyatf"
-version = "0.0.3"
+version = "0.0.1"
 authors = [
     { name="Richard Schulze", email="r.schulze@uni-muenster.de" },
     { name="Ari Rasch", email="a.rasch@uni-muenster.de" },
@@ -22,3 +22,8 @@ keywords = ["auto-tuning", "constraints", "optimization", "performance", "tuning
 [project.urls]
 Homepage = "https://atf-project.org/"
 Issues = "https://github.com/atf-tuner/pyATF/issues"
+
+[tool.hatch.build]
+exclude = [
+    "./venv"
+]
