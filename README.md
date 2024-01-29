@@ -61,7 +61,7 @@ The kernel computes for all $`i\in[1,\texttt{N}]_\mathbb{N}`$:
 For simplicity, we removed in the kernel switching between single and double precision floating point numbers, as well as using OpenCL's vector data types.
 
 To auto-tune a program with pyATF, the programmer has to perform three steps, as briefly outlined in the following.
-The complete pyATF code for `saxpy` is available [here](examples/full_examples/opencl__saxpy/python/opencl__saxpy.py).
+The complete pyATF code for `saxpy` is available [here](examples/full_examples/opencl__saxpy/opencl__saxpy.py).
 
 
 ### Step 1: Generate the Search Space
@@ -85,7 +85,7 @@ LS = TP( 'LS', Interval( 1,N ), lambda WPT, LS: (N / WPT) % LS == 0 )
 The pyATF user can set arbitrary constraints on tuning parameters.
 For this, pyATF allows using any arbitrary, user-defined Python lambda as constraint function that takes as input a value within tuning parameter's range and returns either `true` (iff the constraint is satisfied) or `false` (iff the constraint is not satisfied). 
 
-Interdependencis among tuning parameters are expressed in pyATF via constraints. For this, the constraint function is defined based on tuning parameters (which are defined in the constraint's function definition as parameters and used in its body as variables). For example, the constraint function of parameter LS defines an additional parameter WPT to express that parameter LS has to divide the global size N/WPT. Note that a constraint's parameter name has to exactly match the name of the correspnding tuning parameter to express interdependencies.
+Interdependencies among tuning parameters are expressed in pyATF via constraints. For this, the constraint function is defined based on tuning parameters (which are defined in the constraint's function definition as parameters and used in its body as variables). For example, the constraint function of parameter LS defines an additional parameter WPT to express that parameter LS has to divide the global size N/WPT. Note that a constraint's parameter name has to exactly match the name of the corresponding tuning parameter to express interdependencies.
 
 pyATF's parameter constraints are described in detail [here](https://ieeexplore.ieee.org/abstract/document/8291912).
 
@@ -120,10 +120,10 @@ We first define the kernel straightforwardly as an pyATF OpenCL kernel object `o
 Afterwards, we construct an pyATF OpenCL cost function object of type `opencl.CostFunction`, which we customize with:
 1) target device's OpenCL platform and device id
 2) the kernel's inputs, which are in this example: the input size `N`, a random floating point number for `a` (random data is the default input in auto-tuning), and two `N`-sized buffers for `x` and `y` that are also filled with random floating point numbers;
-3) the OpenCL global and local size, which we chose as: `N/WPT` (global size) and `LS` (local size) -- pyATF allows defining both sizes as Python lambdas that may contain tuning parameters in their definition for high experessivity.
+3) the OpenCL global and local size, which we chose as: `N/WPT` (global size) and `LS` (local size) -- pyATF allows defining both sizes as Python lambdas that may contain tuning parameters in their definition for high expressivity.
 
 Correctness can be optionally validated in pyATF via function `check_result( gold_value )` which checks the `i`-th buffer against a NumPy array `gold_value`.
-Alternatively, the user can use instead of parameter `gold_value` a Python lambda `gold_function` that implements the computation of *gold* (e.g., when random data is used), as demonstrated [here](examples/feature_demonstration/result_check/python/result_check.py).
+Alternatively, the user can use instead of parameter `gold_value` a Python lambda `gold_function` that implements the computation of *gold* (e.g., when random data is used), as demonstrated [here](examples/feature_demonstration/result_check/result_check.py).
 
 
 ### Step 3: Explore the Search Space
@@ -140,7 +140,7 @@ pyATF then automatically explores the search space and returns object `tuning_re
 
 To reduce tuning time, pyATF allows exploiting actual program computations also for the exploration phase, by allowing the user program to explicitly guide the exploration process.
 This is in particular beneficial for iterative applications, where the code part to tune is called repeatedly in the program flow, allowing benefiting from the calls also for exploration.
-For this, pyATF provides function `make_step` which is used as an alternative to function `tune`, as demonstrated [here](examples/feature_demonstration/program_guided_tuning/python/program_guided_tuning.py).
+For this, pyATF provides function `make_step` which is used as an alternative to function `tune`, as demonstrated [here](examples/feature_demonstration/program_guided_tuning/program_guided_tuning.py).
 
 
 ### Search Techniques
