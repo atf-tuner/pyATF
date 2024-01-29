@@ -7,10 +7,10 @@ name = "pyatf"
 version = "0.0.1"
 authors = [
     { name="Richard Schulze", email="r.schulze@uni-muenster.de" },
-    { name="Ari Rasch", email="a.rasch@uni-muenster.de" },
+    { name="Ari Rasch", email="a.rasch@uni-muenster.de" }
 ]
 description = "Auto-Tuning Framework (ATF) is a generic, general-purpose auto-tuning approach for programs whose tuning parameters may be constrained"
-readme = "README.md"
+readme = "./PyPI/README.md"
 requires-python = ">=3.9"
 classifiers = [
     "Programming Language :: Python :: 3",
@@ -25,5 +25,10 @@ Issues = "https://github.com/atf-tuner/pyATF/issues"
 
 [tool.hatch.build]
 exclude = [
-    "./venv"
+    "./.github",
+    "./doc",
+    "./PyPI",
+    "./venv",
+    "./.gitignore",
+    "./.pyproject.toml"
 ]
