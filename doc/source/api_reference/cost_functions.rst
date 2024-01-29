@@ -1,189 +1,137 @@
 Cost Functions
 ==============
 
-ATF allows as cost function any arbitrary C++ callable that takes as input a configuration of tuning parameters and returns a value for which operator :code:`<` is defined, e.g., :code:`size_t`.
+pyATF allows as cost function any arbitrary Lambda callable that takes as input a configuration of tuning parameters and returns a value for which operator :code:`<` is defined, e.g., :code:`float`.
 
 Pre-Implemented Cost Functions
 ------------------------------
 
-ATF provides the following pre-implemented cost functions:
+pyATF provides the following pre-implemented cost functions:
 
-.. cpp:class:: generic::cost_function
+.. py:class:: pyatf.cost_functions.generic.CostFunction
 
-  .. cpp:function:: cost_function(const std::string &run_command)
+  .. py:function:: CostFunction(*run_command: str)
 
-    :param run_command: Run command (executed in bash).
+    :param run_command: Run command (executed via :code:`subprocess.run`).
 
-  .. cpp:function:: compile_command(const std::string &compile_command)
+  .. py:function:: compile_command(*compile_command: str)
 
-    :param compile_command: Compile command (executed in bash).
+    :param compile_command: Compile command (executed via :code:`subprocess.run`).
 
-  .. cpp:function:: costfile(const std::string &costfile)
+  .. py:function:: cost_file(costfile: str)
 
-    :param costfile: Path to costfile containing cost as string (must be convertible to :code:`cost_t`).
+    :param cost_file: Path to cost file containing cost as string (must be convertible to :code:`pyatf.tuning_data.Cost`).
 
-.. cpp:class:: opencl::cost_function
+.. py:class:: pyatf.cost_functions.opencl.CostFunction
 
-  .. cpp:function:: cost_function(const opencl::kernel &kernel)
+  .. py:function:: CostFunction(kernel: pyatf.cost_functions.opencl.Kernel)
 
     Initializes cost function with OpenCL kernel to tune.
 
-  .. cpp:function:: platform_id(size_t platform_id)
+  .. py:function:: platform_id(platform_id: int)
 
     Target OpenCL platform id.
 
-  .. cpp:function:: device_id(size_t device_id)
+  .. py:function:: device_id(device_id: int)
 
     Target OpenCL device id.
 
-  .. cpp:function:: template<typename... Ts> inputs(Ts&&... inputs)
+  .. py:function:: inputs(*inputs: Union[numpy.ndarray, numpy.generic])
 
-    Kernel's input arguments (specified as instances of :code:`atf::scalar<T>` and :code:`atf::buffer<T>`).
+    Kernel's input arguments (specified as instances of :code:`numpy.ndarray` and :code:`numpy.generic`).
 
-  .. cpp:function:: global_size(tp_int_expression&& gs_0, tp_int_expression&& gs_1 = 1, tp_int_expression&& gs_2 = 1)
+  .. py:function:: global_size(gs_0: Union[int, Callable[..., int]], gs_1: Union[int, Callable[..., int]] = 1, gs_2: Union[int, Callable[..., int]] = 1)
 
     Kernel's 3-dimensional OpenCL global size as arithmetic expressions that may contain tuning parameters.
 
-  .. cpp:function:: local_size(tp_int_expression&& ls_0, tp_int_expression&& ls_1 = 1, tp_int_expression&& ls_2 = 1)
+  .. py:function:: local_size(ls_0: Union[int, Callable[..., int]], ls_1: Union[int, Callable[..., int]] = 1, ls_2: Union[int, Callable[..., int]] = 1)
 
     Kernel's 3-dimensional OpenCL local size as arithmetic expressions that may contain tuning parameters.
 
-  .. cpp:function:: template<size_t index> check_result(gold_data, comparator = equality())
+  .. py:function:: check_result(index: int, gold_data_or_callable: Union[numpy.ndarray, numpy.generic, Callable], comparator = equality)
 
-    Check result for scalar/buffer at position :code:`index` against :code:`gold_data`.
+    Check result for scalar/buffer at position :code:`index` against :code:`gold_data_or_callable`.
 
-    :param gold_data: either of type: i) :code:`std::vector<T>` for :code:`atf::buffer<T>`, or ii) :code:`T` for :code:`atf::scalar<T>`
+    :param gold_data_or_callable: either of type: i) :code:`numpy.ndarray`, ii) :code:`numpy.generic`, or iii) a callable using kernel's input scalars/buffers (of type :code:`numpy.generic`/:code:`numpy.ndarray`) to compute a gold scalar/buffer.
 
-    :param comparator: used for comparing :code:`T` values; is of type :code:`std::function<bool(T,T)>`
+    :param comparator: used for comparing kernel values against gold values; is a callable that takes two values as input (kernel and gold value) and returns True, iff the values are considered the same.
 
-  .. cpp:function:: template<size_t index> check_result(gold_callable, comparator = equality())
-
-    Check result for scalar/buffer at position :code:`index` against scalar/buffer computed via :code:`gold_callable`.
-
-    :param gold_callable: computes scalar/buffer (of type :code:`T`/:code:`std::vector<T>`) using kernel's input scalars/buffers (of type :code:`T`/:code:`std::vector<T>`)
-
-    :param comparator: used for comparing :code:`T` values; is of type :code:`std::function<bool(T,T)>`
-
-  .. cpp:function:: warmups(size_t warmups)
+  .. py:function:: warmups(warmups: int)
 
     Number of warmups for each kernel run.
 
-  .. cpp:function:: evaluations(size_t evaluations)
+  .. py:function:: evaluations(evaluations: int)
 
     Number of evaluations for each kernel run.
 
-.. cpp:class:: cuda::cost_function
+  .. py:function:: silent(silent: bool)
 
-  .. cpp:function:: cost_function(const cuda::kernel &kernel)
+    Silences log messages.
+
+.. py:class:: pyatf.cost_functions.cuda.CostFunction
+
+  .. py:function:: CostFunction(kernel: pyatf.cost_functions.cuda.Kernel)
 
     Initializes cost function with CUDA kernel to tune.
 
-  .. cpp:function:: device_id(int device_id)
+  .. py:function:: device_id(device_id: int)
 
     Target CUDA device id.
 
-  .. cpp:function:: template<typename... Ts> inputs(Ts&&... inputs)
+  .. py:function:: inputs(*inputs: Union[numpy.ndarray, numpy.generic])
 
-    Kernel's input arguments (specified as instances of :code:`atf::scalar<T>` and :code:`atf::buffer<T>`).
+    Kernel's input arguments (specified as instances of :code:`numpy.ndarray` and :code:`numpy.generic`).
 
-  .. cpp:function:: grid_dim(tp_int_expression&& gs_0, tp_int_expression&& gs_1 = 1, tp_int_expression&& gs_2 = 1)
+  .. py:function:: grid_dim(x: Union[int, Callable[..., int]], y: Union[int, Callable[..., int]] = 1, z: Union[int, Callable[..., int]] = 1)
 
     Kernel's 3-dimensional CUDA grid dimension as arithmetic expressions that may contain tuning parameters.
 
-  .. cpp:function:: block_dim(tp_int_expression&& ls_0, tp_int_expression&& ls_1 = 1, tp_int_expression&& ls_2 = 1)
+  .. py:function:: block_dim(x: Union[int, Callable[..., int]], y: Union[int, Callable[..., int]] = 1, z: Union[int, Callable[..., int]] = 1)
 
     Kernel's 3-dimensional CUDA block dimension as arithmetic expressions that may contain tuning parameters.
 
-  .. cpp:function:: template<size_t index> check_result(gold_data, comparator = equality())
+  .. py:function:: check_result(index: int, gold_data_or_callable: Union[numpy.ndarray, numpy.generic, Callable], comparator = equality)
 
-    Check result for scalar/buffer at position :code:`index` against :code:`gold_data`.
+    Check result for scalar/buffer at position :code:`index` against :code:`gold_data_or_callable`.
 
-    :param gold_data: either of type: i) :code:`std::vector<T>` for :code:`atf::buffer<T>`, or ii) :code:`T` for :code:`atf::scalar<T>`
+    :param gold_data_or_callable: either of type: i) :code:`numpy.ndarray`, ii) :code:`numpy.generic`, or iii) a callable using kernel's input scalars/buffers (of type :code:`numpy.generic`/:code:`numpy.ndarray`) to compute a gold scalar/buffer.
 
-    :param comparator: used for comparing :code:`T` values; is of type :code:`std::function<bool(T,T)>`
+    :param comparator: used for comparing kernel values against gold values; is a callable that takes two values as input (kernel and gold value) and returns True, iff the values are considered the same.
 
-  .. cpp:function:: template<size_t index> check_result(gold_callable, comparator = equality())
-
-    Check result for scalar/buffer at position :code:`index` against scalar/buffer computed via :code:`gold_callable`.
-
-    :param gold_callable: computes scalar/buffer (of type :code:`T`/:code:`std::vector<T>`) using kernel's input scalars/buffers (of type :code:`T`/:code:`std::vector<T>`)
-
-    :param comparator: used for comparing :code:`T` values; is of type :code:`std::function<bool(T,T)>`
-
-  .. cpp:function:: warmups(size_t warmups)
+  .. py:function:: warmups(warmups: int)
 
     Number of warmups for each kernel run.
 
-  .. cpp:function:: evaluations(size_t evaluations)
+  .. py:function:: evaluations(evaluations: int)
 
     Number of evaluations for each kernel run.
+
+  .. py:function:: silent(silent: bool)
+
+    Silences log messages.
 
 Misc
 ----
 
-.. cpp:class:: template<typename T> scalar
+.. py:class:: pyatf.cost_functions.opencl.Kernel
 
-  .. cpp:function:: scalar(T value)
-
-    Scalar representing :code:`value`.
-
-  .. cpp:function:: scalar()
-
-    Random scalar.
-
-  .. cpp:function:: scalar(std::array<T, 2> interval)
-
-    Random scalar in :code:`interval`.
-
-    :param interval: interval's min and max values.
-
-.. cpp:class:: template<typename T> buffer
-
-  .. cpp:function:: buffer(std::vector<T> values)
-
-    Buffer representing :code:`values`.
-
-  .. cpp:function:: buffer(size_t size, T value)
-
-    Buffer containing :code:`size`-many times :code:`value`.
-
-  .. cpp:function:: buffer(size_t size)
-
-    Random buffer of size :code:`size` containing values of type :code:`T`.
-
-  .. cpp:function:: buffer(size_t size, std::array<T, 2> interval)
-
-    Random buffer of size :code:`size` containing values of type :code:`T` in :code:`interval`.
-
-    :param interval: interval's min and max values.
-
-  .. cpp:function:: buffer(size_t size, std::function<T(size_t)> generator)
-
-    Buffer containing values :code:`generator(0), generator(1), ... , generator(size - 1)`.
-
-.. cpp:class:: template<typename... Ts> opencl::kernel
-
-  :param Ts: Types of kernel's input arguments (specified as :code:`atf::scalar<T>` and :code:`atf::buffer<T>`).
-
-  .. cpp:function:: kernel( std::string source, std::string name = "func", std::string flags = "" )
+  .. py:function:: Kernel( source: str, name: str = "func", flags: Iterable[str] = None )
 
     OpenCL kernel wrapper.
 
-    :param source: OpenCL source code as string; function :code:`atf::path( std::string path )` can be used to extract source code from file
+    :param source: OpenCL source code as string; function :code:`pyatf.cost_functions.opencl.path( path: str )` can be used to extract source code from file
 
     :param name: kernel name
 
     :param flags: kernel flags
 
-.. cpp:class:: template<typename... Ts> cuda::kernel
+.. py:class:: pyatf.cost_functions.cuda.Kernel
 
-  :param Ts: Types of kernel's input arguments (specified as :code:`atf::scalar<T>` and :code:`atf::buffer<T>`).
-
-  .. cpp:function:: kernel( std::string source, std::string name = "func", std::string flags = "" )
+  .. py:function:: Kernel( source: str, name: str = "func", flags: Iterable[str] = None )
 
     CUDA kernel wrapper.
 
-    :param source: CUDA source code as string; function :code:`atf::path( std::string path )` can be used to extract source code from file
+    :param source: CUDA source code as string; function :code:`pyatf.cost_functions.cuda.path( path: str )` can be used to extract source code from file
 
     :param name: kernel name
 
