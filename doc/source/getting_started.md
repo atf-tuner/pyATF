@@ -1,21 +1,4 @@
-# pyATF: The Auto-Tuning Framework (ATF) in Python
-
-Auto-Tuning Framework (ATF) is a generic, general-purpose auto-tuning approach that automatically finds well-performing values of performance-critical parameters (a.k.a. tuning parameters), such as sizes of tiles and numbers of threads. 
-ATF works for programs written in arbitrary programming languages and belonging to arbitrary application domains, and it allows tuning for arbitrary objectives (e.g., high runtime performance and/or low energy consumption).
-
-A major feature of ATF is that it supports auto-tuning programs whose tuning parameters have *interdependencies* among them, e.g., the value of one tuning parameter has to be smaller than the value of another tuning parameter.
-For this, ATF introduces novel process to *generating*, *storing*, and *exploring* the search spaces of interdependent tuning parameters (discussed in detail [here](https://dl.acm.org/doi/abs/10.1145/3427093)).
-
-ATF comes with easy-to-use user interfaces to make auto-tuning appealing also to common application developers.
-The Interfaces are based on either: 
-  1. *Domain-Specific Language (DSL)*, for auto-tuning at compile time (a.k.a. offline tuning) (discussed [here](https://onlinelibrary.wiley.com/doi/full/10.1002/cpe.4423?casa_token=FO9i0maAi_MAAAAA%3AwSOYWsoqfLqcbazsprmzKkmI5msUCY4An5A7CCwi-_V8u10VdpgejcWuiTwYhWnZpaCJZ3NmXt86sg)); 
-  2. *General Purpose Language (GPL)*, for auto-tuning at runtime (a.k.a. online tuning), e.g., of *C++ programs* (referred to as [cppATF](todo), and discussed [here](https://ieeexplore.ieee.org/abstract/document/8291912)) or *Python programs* (referred to as [pyATF](todo)).
-
-**This repository contains *pyATF*, i.e., ATF with its GPL-based *Python interface*.**
-
-## Documentation
-
-The full documentation is available [here](https://mdh-project.gitlab.io/pyatf).
+# Getting Started
 
 ## Installation
 
@@ -55,13 +38,13 @@ __kernel void saxpy( const int N, const float a, const __global float* x, __glob
 ```
 
 It takes as inputs: the input size `N`, a floating point number `a`, and two `N`-sized vectors `x` and `y` of floating point numbers. 
-The kernel computes for all $`i\in[1,\texttt{N}]_\mathbb{N}`$:
+The kernel computes for all {math}`i\in[1,\texttt{N}]_\mathbb{N}`:
 
     y[ i ] = a * x[ i ] + y[ i ] 
 For simplicity, we removed in the kernel switching between single and double precision floating point numbers, as well as using OpenCL's vector data types.
 
 To auto-tune a program with pyATF, the programmer has to perform three steps, as briefly outlined in the following.
-The complete pyATF code for `saxpy` is available [here](examples/full_examples/opencl__saxpy/opencl__saxpy.py).
+The complete pyATF code for `saxpy` is available [here](https://github.com/atf-tuner/pyATF/blob/main/examples/full_examples/opencl__saxpy/opencl__saxpy.py).
 
 
 ### Step 1: Generate the Search Space
@@ -69,14 +52,14 @@ The complete pyATF code for `saxpy` is available [here](examples/full_examples/o
 pyATF automatically generates the search space for the user. 
 For this, the user describes the space using tuning parameters, which are in this example:
 
-1. `WPT` (*Work Per Thread*) -- a parameter in the interval $`[1,\texttt{N}]_\mathbb{N}`$ that has to divide the input size `N`:
+1. `WPT` (*Work Per Thread*) -- a parameter in the interval {math}`[1,\texttt{N}]_\mathbb{N}` that has to divide the input size `N`:
 
 ```python
 WPT = TP( 'WPT', Interval( 1,N ), lambda WPT: N % WPT == 0 )
 ```
 
 
-2. `LS` (*Local Size*) -- a parameter in the interval $`[1,\texttt{N}]_\mathbb{N}`$ that has to divide the global size `N/WPT`:
+2. `LS` (*Local Size*) -- a parameter in the interval {math}`[1,\texttt{N}]_\mathbb{N}` that has to divide the global size `N/WPT`:
 
 ```python
 LS = TP( 'LS', Interval( 1,N ), lambda WPT, LS: (N / WPT) % LS == 0 )
@@ -120,10 +103,10 @@ We first define the kernel straightforwardly as an pyATF OpenCL kernel object `o
 Afterwards, we construct an pyATF OpenCL cost function object of type `opencl.CostFunction`, which we customize with:
 1) target device's OpenCL platform and device id
 2) the kernel's inputs, which are in this example: the input size `N`, a random floating point number for `a` (random data is the default input in auto-tuning), and two `N`-sized buffers for `x` and `y` that are also filled with random floating point numbers;
-3) the OpenCL global and local size, which we chose as: `N/WPT` (global size) and `LS` (local size) -- pyATF allows defining both sizes as Python lambdas that may contain tuning parameters in their definition for high expressivity.
+3) the OpenCL global and local size, which we chose as: `N/WPT` (global size) and `LS` (local size) -- pyATF allows defining both sizes as Python lambdas that may contain tuning parameters in their definition for high experessivity.
 
 Correctness can be optionally validated in pyATF via function `check_result( gold_value )` which checks the `i`-th buffer against a NumPy array `gold_value`.
-Alternatively, the user can use instead of parameter `gold_value` a Python lambda `gold_function` that implements the computation of *gold* (e.g., when random data is used), as demonstrated [here](examples/feature_demonstration/result_check/result_check.py).
+Alternatively, the user can use instead of parameter `gold_value` a Python lambda `gold_function` that implements the computation of *gold* (e.g., when random data is used), as demonstrated [here](https://github.com/atf-tuner/pyATF/blob/main/examples/feature_demonstration/result_check/result_check.py).
 
 
 ### Step 3: Explore the Search Space
@@ -140,7 +123,7 @@ pyATF then automatically explores the search space and returns object `tuning_re
 
 To reduce tuning time, pyATF allows exploiting actual program computations also for the exploration phase, by allowing the user program to explicitly guide the exploration process.
 This is in particular beneficial for iterative applications, where the code part to tune is called repeatedly in the program flow, allowing benefiting from the calls also for exploration.
-For this, pyATF provides function `make_step` which is used as an alternative to function `tune`, as demonstrated [here](examples/feature_demonstration/program_guided_tuning/program_guided_tuning.py).
+For this, pyATF provides function `make_step` which is used as an alternative to function `tune`, as demonstrated [here](https://github.com/atf-tuner/pyATF/blob/main/examples/feature_demonstration/program_guided_tuning/program_guided_tuning.py).
 
 
 ### Search Techniques
@@ -161,7 +144,7 @@ pyATF currently provides the following, pre-implemented search techniques:
   1. `RoundRobin`
   2. `AUCBandit` (recommended as default)
 
-Further techniques can be easily added to pyATF by implementing a straightforward [interface](atf/search_techniques/search_technique.py).
+Further techniques can be easily added to pyATF by implementing a straightforward [interface](https://github.com/atf-tuner/pyATF/blob/main/src/pyatf/search_techniques/search_technique.py).
 
 
 ### Abort Conditions
@@ -184,7 +167,7 @@ If no abort condition is set, pyATF uses `Evaluations( S )`, where `S` is the se
 
 To meet complex user requirements, abort conditions can be combined by using the logical operators `And` and `Or`, e.g., `Or( Evaluations(100) , Duration(minutes=5) )` to stop tuning after 100 evaluations or 5 minutes, whichever comes first.
 
-New abort conditions can be easily added to pyATF by implementing the corresponding [interface](atf/abort_conditions/abort_condition.py).
+New abort conditions can be easily added to pyATF by implementing the corresponding [interface](https://github.com/atf-tuner/pyATF/blob/main/src/pyatf/abort_conditions/abort_condition.py).
 
 
 
@@ -199,7 +182,7 @@ In particular, we show that pyATF is able to auto-tune the computations to highe
 
 <br>
 
-![Experimental Results](doc/images/atf_experiments.png)
+![Experimental Results](../images/atf_experiments.png)
 
 <br>
 
