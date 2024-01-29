@@ -10,7 +10,7 @@ authors = [
     { name="Ari Rasch", email="a.rasch@uni-muenster.de" },
 ]
 description = "Auto-Tuning Framework (ATF) is a generic, general-purpose auto-tuning approach for programs whose tuning parameters may be constrained"
-readme = "Readme.md"
+readme = "README.md"
 requires-python = ">=3.9"
 classifiers = [
     "Programming Language :: Python :: 3",
