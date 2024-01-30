@@ -263,7 +263,7 @@ class Tuner:
         self._log_file = log_file
         return self
 
-    def make_step(self, cost_function: CostFunction, progress: float = None):
+    def make_step(self, cost_function: CostFunction):
         if self._tuning_run is None:
             # create & initialize tuning run
             self._tuning_run = Tuner.TuningRun(

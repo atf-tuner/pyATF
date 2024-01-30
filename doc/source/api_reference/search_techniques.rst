@@ -1,74 +1,74 @@
 Search Techniques
 =================
 
-.. cpp:type:: std::vector<double> coordinates
+.. py:data:: Coordinates: Tuple[float, ...]
 
-  Coordinates are in ATF represented as a vector of :code:`double` s.
+  Coordinates are in pyATF represented as a tuple of :code:`float` s.
 
-.. cpp:type:: double cost_t
+.. py:data:: Cost: float
 
-  We currently use :code:`double` as cost type.
+  We currently use :code:`float` as cost type.
 
-.. cpp:class:: search_technique
+.. py:class:: pyatf.search_techniques.search_technique.SearchTechnique
 
   Searches over multi-dimensional coordinate space :math:`(0,1]^D`.
 
-  .. cpp:function:: initialize(size_t dimensionality)
+  .. py:function:: initialize(dimensionality: int)
 
     Initializes the search technique.
 
     :param dimensionality: "D" of the coordinate space
 
-  .. cpp:function:: finalize()
+  .. py:function:: finalize()
 
     Finalizes the search technique.
 
-  .. cpp:function:: std::set<coordinates> get_next_coordinates()
+  .. py:function:: get_next_coordinates() -> Set[Coordinates]
 
     Returns the next coordinates in :math:`(0,1]^D` for which the costs are requested.
 
-    Function :code:`get_next_coordinates()` is called by ATF before each call to :code:`report_costs(...)`.
+    Function :code:`get_next_coordinates()` is called by pyATF before each call to :code:`report_costs(...)`.
 
     :return: coordinates in :math:`(0,1]^D`
 
-  .. cpp:function:: report_costs(const std::map<coordinates, cost_t> &costs)
+  .. py:function:: report_costs(costs: Dict[Coordinates, Cost])
 
     Processes costs for coordinates requested via function :code:`get_next_coordinates()`.
 
-    Function :code:`report_costs(...)` is called by ATF after each call to :code:`get_next_coordinates()`.
+    Function :code:`report_costs(...)` is called by pyATF after each call to :code:`get_next_coordinates()`.
 
     :param costs: coordinates mapped to their costs
 
-.. cpp:type:: atf::big_int index
+.. py:data:: Index: int
 
-  Index is represented in ATF as an integer value (:code:`atf::big_int` is used exactly the same as :code:`int`).
+  Index is represented in pyATF as an :code:`int` value.
 
-.. cpp:class:: search_technique_1d
+.. py:class:: pyatf.search_techniques.search_technique_1d.SearchTechnique1D
 
   Searches over one-dimensional index space :math:`\{ 0 , ... , |SP|-1 \}`, where :math:`|SP|` is the search space size.
 
-  .. cpp:function:: initialize(atf::big_int search_space_size)
+  .. py:function:: initialize(search_space_size: int)
 
     Initializes the search technique.
 
     :param search_space_size: the total number of configurations in the search space
 
-  .. cpp:function:: finalize()
+  .. py:function:: finalize()
 
     Finalizes the search technique.
 
-  .. cpp:function:: std::set<index> get_next_indices()
+  .. py:function:: get_next_indices() -> Set[Index]
 
     Returns the next indices in :math:`\{ 0 , ... , |SP|-1 \}` for which the costs are requested.
 
-    Function :code:`get_next_indices()` is called by ATF before each call to :code:`report_costs(...)`.
+    Function :code:`get_next_indices()` is called by pyATF before each call to :code:`report_costs(...)`.
 
     :return: indices in :math:`\{ 0 , ... , |SP|-1 \}`
 
-  .. cpp:function:: report_costs(const std::map<index, cost_t> &costs)
+  .. py:function:: report_costs(costs: Dict[Index, Cost])
 
     Processes costs for indices requested via function :code:`get_next_indices()`.
 
-    Function :code:`report_costs(...)` is called by ATF after each call to :code:`get_next_indices()`.
+    Function :code:`report_costs(...)` is called by pyATF after each call to :code:`get_next_indices()`.
 
     :param costs: indices mapped to their costs

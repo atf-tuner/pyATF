@@ -1,89 +1,101 @@
 Tuner
 =====
 
-.. cpp:class:: tuner
+.. py:class:: pyatf.Tuner
 
   Represents a tuner, that can be customized via its member setter functions.
 
-  .. cpp:function:: tuner()
+  .. py:function:: Tuner()
 
     Default constructor.
 
-  .. cpp:function:: tuning_parameters(tps...)
+  .. py:function:: tuning_parameters(*tps: TP)
 
     Sets program's tuning parameters.
 
-  .. cpp:function:: tuning_parameters(tp_groups...)
-
-    Sets program's tuning parameters as independent parameter groups.
-
-  .. cpp:function:: search_technique(const search_technique& search_technique)
+  .. py:function:: search_technique(search_technique: Union[SearchTechnique, SearchTechnique1D])
 
     Sets the search technique for exploration.
 
-  .. cpp:function:: silent(bool silent)
+  .. py:function:: silent(silent: bool)
 
     Silences log messages.
 
-  .. cpp:function:: log_file(const std::string &log_file)
+  .. py:function:: log_file(log_file: str)
 
     Sets path to logfile.
 
-  .. cpp:function:: tune(cost_function &cost_function, const abort_condition &abort_condition)
+  .. py:function:: tune(cost_function: CostFunction, abort_condition: Optional[AbortCondition] = None)
 
     Tunes :code:`cost_function` until :code:`abort_condition` is met.
 
     Default abort condition: explore full search space.
 
-  .. cpp:function:: make_step(cost_function &cost_function)
+  .. py:function:: make_step(cost_function: CostFunction)
 
     Make one tuning step using :code:`cost_function`.
 
-  .. cpp:function:: configuration get_configuration()
+  .. py:function:: get_tuning_data() -> TuningData
 
-    Request next configuration to evaluate.
+    Returns the tuning data object.
 
-    Evaluated cost must be reported to tuner via function :code:`report_cost`.
+.. py:class:: pyatf.TP
 
-  .. cpp:function:: report_cost(cost_t cost)
-
-    Report evaluated cost of requested configuration.
-
-    Configuration had to be requested via :code:`get_configuration`.
-
-  .. cpp:function:: tuning_status get_tuning_status()
-
-    Returns the tuning status object.
-
-.. cpp:class:: tuning_parameter
-
-  .. cpp:function:: tuning_parameter(name, range, constraint)
+  .. py:function:: TP(name, range, constraint)
 
     Specifies a tuning parameter by its name, range, and constraint.
 
     :param name: Tuning parameter's name as string
-    :param range: Either: 1) :code:`atf::interval<T>(min, max)` which is an interval of values of type :code:`T` between :code:`min` and :code:`max` (both including); intervals may have as optional argument a :code:`step_size` and function :code:`generator` (for using values :code:`generator(min), ..., generator(max)`; currently pre-implemented: :code:`atf::pow_2`); 2) :code:`{ v_1, v_2, ... }` which is a set of values :code:`v_1`, :code:`v_2`, ... of same type :code:`T`
+    :param range: Either: 1) :code:`pyatf.Interval(min, max)` which is an interval of values between :code:`min` and :code:`max` (both including); intervals may have as optional argument a :code:`step_size` and function :code:`generator` (for using values :code:`generator(min), ..., generator(max)`; or 2) :code:`pyatf.Set(*values)`.
 
-.. cpp:class:: configuration
+.. py:class:: pyatf.tuning_data.Configuration
 
   Configuration of tuning parameters (name-value pairs).
 
-.. cpp:class:: tuning_status
+.. py:class:: pyatf.tuning_data.TuningData
 
-  Tuning status object.
+  Tuning data object.
 
-  .. cpp:function:: configuration best_configuration()
+  .. py:attribute:: tuning_parameters (read-only)
 
-  .. cpp:function:: cost_t min_cost()
+  .. py:attribute:: constrained_search_space_size (read-only)
 
-  .. cpp:function:: size_t number_of_evaluated_configs()
+  .. py:attribute:: unconstrained_search_space_size (read-only)
 
-  .. cpp:function:: size_t number_of_invalid_configs()
+  .. py:attribute:: search_space_generation_ns (read-only)
 
-  .. cpp:function:: size_t number_of_valid_configs()
+  .. py:attribute:: search_technique (read-only)
 
-  .. cpp:function:: size_t evaluations_required_to_find_best_found_result()
+  .. py:attribute:: abort_condition (read-only)
 
-  .. cpp:function:: size_t valid_evaluations_required_to_find_best_found_result()
+  .. py:attribute:: tuning_start_timestamp (read-only)
 
-  .. cpp:function:: std::chrono::steady_clock::time_point tuning_start_time()
+  .. py:attribute:: terminated_early (read-only)
+
+  .. py:attribute:: history (read-only)
+
+  .. py:attribute:: improvement_history (read-only)
+
+  .. py:attribute:: number_of_evaluated_configurations (read-only)
+
+  .. py:attribute:: number_of_evaluated_valid_configurations (read-only)
+
+  .. py:attribute:: number_of_evaluated_invalid_configurations (read-only)
+
+  .. py:function:: total_tuning_duration()
+
+  .. py:function:: configuration_of_min_cost()
+
+  .. py:function:: meta_data_of_min_cost()
+
+  .. py:function:: search_space_coordinates_of_min_cost()
+
+  .. py:function:: search_space_index_of_min_cost()
+
+  .. py:function:: timestamp_of_min_cost()
+
+  .. py:function:: duration_to_min_cost()
+
+  .. py:function:: evaluations_to_min_cost()
+
+  .. py:function:: valid_evaluations_to_min_cost()

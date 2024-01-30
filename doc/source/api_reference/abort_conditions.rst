@@ -1,11 +1,11 @@
 Abort Conditions
 ================
 
-.. cpp:class:: abort_condition
+.. py:class:: pyatf.abort_conditions.abort_condition.AbortCondition
 
-  .. cpp:function:: bool stop(const tuning_status& status)
+  .. py:function:: stop(tuning_data: TuningData) -> bool
 
-    Determines whether a tuning run should be stopped based on its tuning status.
+    Determines whether a tuning run should be stopped based on its tuning data.
 
-    :param  status: The current status of the tuning run (best found configuration so far, tuning time, ...)
+    :param  tuning_data: The current data of the tuning run (best found configuration so far, tuning time, ...)
     :return: true, if the tuning should stop, false otherwise
