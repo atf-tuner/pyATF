@@ -9,9 +9,9 @@ BLOCK_SIZE = TP('BLOCK_SIZE', Interval(1, 10))
 run_command     = './tmp.bin'
 compile_command = 'g++ ../mmm_block.cpp -DBLOCK_SIZE=$BLOCK_SIZE -o ./tmp.bin'
 
-generic_cf = generic.CostFunction(run_command).compile_command(compile_command)
+cf_matmul = generic.CostFunction(run_command).compile_command(compile_command)
 
 # Step 3: Explore the Search Space
 tuning_result = Tuner().tuning_parameters( BLOCK_SIZE )   \
                        .search_technique( Exhaustive() )  \
-                       .tune( generic_cf )
+                       .tune( cf_matmul )
