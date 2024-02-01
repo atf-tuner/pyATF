@@ -34,7 +34,7 @@ tuner = Tuner().tuning_parameters( CACHE_BLOCK_SIZE )  \
 
 data = np.random.rand( N+3,N+3 ).astype(np.float32)
 
-gaussian_cf = python.CostFunction(TunableGaussian)( data, N )
+cf_gaussian = python.CostFunction(TunableGaussian)( data, N )
 
 for _ in range(8):
-    tuner.make_step( gaussian_cf )
+    tuner.make_step( cf_gaussian )

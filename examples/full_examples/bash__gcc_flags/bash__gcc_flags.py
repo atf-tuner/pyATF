@@ -14,9 +14,9 @@ early_inlining_insns = TP('early_inlining_insns', Interval( 0, 1000 )           
 run_command     = './raytracer/raytracer'
 compile_command = './raytracer/compile_raytracer.sh'
 
-generic_cf = generic.CostFunction(run_command).compile_command(compile_command)
+cf_raytracer = generic.CostFunction(run_command).compile_command(compile_command)
 
 # Step 3: Explore the Search Space
 tuning_result = Tuner().tuning_parameters( opt_level, align_functions, early_inlining_insns )  \
                        .search_technique( AUCBandit() )                                        \
-                       .tune( generic_cf, Duration(timedelta(minutes=5)) )
+                       .tune( cf_raytracer, Duration(timedelta(minutes=5)) )
