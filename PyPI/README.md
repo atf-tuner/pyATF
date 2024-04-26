@@ -15,7 +15,7 @@ The Interfaces are based on either:
 
 ## Documentation
 
-The full documentation is available [here](https://mdh-project.gitlab.io/pyatf).
+The full documentation is available [here](https://atf-tuner.org/pyATF/).
 
 ## Installation
 
