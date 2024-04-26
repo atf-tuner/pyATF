@@ -1,13 +1,14 @@
+import csv
 import inspect
 import time
 from math import ceil
-from typing import Union, Tuple, Callable, Optional, Set, Dict, Iterable
+from typing import Union, Tuple, Callable, Optional, Set, Dict, Iterable, TextIO, Any
 
 import numpy
 import pyopencl as cl
 
 from pyatf.result_check import equality
-from pyatf.tuning_data import Configuration, Cost, MetaData, CostFunctionError
+from pyatf.tuning_data import Configuration, Cost, CostFunctionError
 
 
 def get_device(platform_id: int = 0, device_id: int = 0) -> cl.Device:
@@ -69,6 +70,12 @@ class Kernel:
 
 Input = Union[numpy.ndarray, numpy.generic]
 
+_LOG_FILE_COLUMNS = ('build_time_ns',
+                     'opencl_error_code',
+                     'opencl_error_routine',
+                     'result_check',
+                     'checked_inputs')
+
 
 class CostFunction:
     def __init__(self, kernel: Kernel):
@@ -95,9 +102,15 @@ class CostFunction:
 
         self._gold_data: Dict[int, Tuple[Input, Callable[[numpy.generic, numpy.generic], bool]]] = {}
         self._gold_cmp_buffer: Dict[int, Input] = {}
+        self._abort_on_invalid_results: bool = False
+
+        self._abort_on_opencl_error: bool = False
 
         self._warmups: int = 0
         self._evaluations: int = 1
+
+        self._log_file: Optional[TextIO] = None
+        self._log_file_writer = None
 
         self._cl_platform: Optional[cl.Platform] = None
         self._cl_device: Optional[cl.Device] = None
@@ -108,9 +121,14 @@ class CostFunction:
     def __del__(self):
         self._free_buffers()
         self._free_command_queue()
+        if self._log_file:
+            self._log_file_writer = None
+            self._log_file.close()
+            self._log_file = None
 
     def silent(self, silent: bool):
         self._silent = silent
+        return self
 
     def platform_id(self, platform_id: int):
         self._free_buffers()
@@ -187,17 +205,38 @@ class CostFunction:
             self._gold_cmp_buffer[index] = gold_buffer.copy()
         return self
 
+    def abort_on_invalid_results(self, abort_on_invalid_results: bool = True):
+        self._abort_on_invalid_results = abort_on_invalid_results
+        return self
+
+    def abort_on_opencl_error(self, abort_on_opencl_error: bool = True):
+        self._abort_on_opencl_error = abort_on_opencl_error
+        return self
+
     def warmups(self, warmups: int):
         self._warmups = warmups
+        return self
 
     def evaluations(self, evaluations: int):
         self._evaluations = evaluations
+        return self
 
-    def __call__(self, configuration: Configuration) -> Tuple[Cost, MetaData]:
+    def log_file(self, log_file_path: str):
+        if self._log_file:
+            self._log_file_writer = None
+            self._log_file.close()
+            self._log_file = None
+        if log_file_path:
+            self._log_file = open(log_file_path, 'w')
+            self._log_file_writer = csv.writer(self._log_file, delimiter=";")
+            self._log_file_writer.writerow(_LOG_FILE_COLUMNS)
+        return self
+
+    def __call__(self, configuration: Configuration) -> Cost:
         if self._platform_id is None or self._device_id is None:
             raise ValueError('no OpenCL platform or device was selected')
 
-        meta_data = {}
+        meta_data: Dict[str, Any] = {c: None for c in _LOG_FILE_COLUMNS}
 
         try:
             # create & build program, and get kernel object
@@ -274,39 +313,47 @@ class CostFunction:
                 # result check
                 if e == 0 and self._gold_data:
                     self._cpy_to_host(self._gold_cmp_buffer)
+                    meta_data['checked_inputs'] = []
                     for idx, (gold_values, comparator) in self._gold_data.items():
+                        meta_data['checked_inputs'].append(idx)
                         result_values = self._gold_cmp_buffer[idx]
                         if result_values.size != gold_values.size:
-                            meta_data['result_check'] = {
-                                'status': 'failed',
-                                'input': idx,
-                                'reason': 'result size is not equal to gold size'
-                            }
-                            raise CostFunctionError(meta_data)
+                            meta_data['result_check'] = f'FAILED for input {idx}: result size is not equal to gold size'
+                            if self._abort_on_invalid_results:
+                                raise RuntimeError('invalid results')
+                            else:
+                                raise CostFunctionError('invalid results')
                         for value_idx, (result_value, gold_value) in enumerate(zip(result_values, gold_values)):
                             if not comparator(result_value, gold_value):
-                                meta_data['result_check'] = {
-                                    'status': 'failed',
-                                    'input': idx,
-                                    'position': value_idx,
-                                    'expected': str(gold_value),
-                                    'actual': str(result_value)
-                                }
-                                raise CostFunctionError(meta_data)
-                    meta_data['result_check'] = {'status': 'success', 'checked_inputs': tuple(self._gold_data.keys())}
+                                meta_data['result_check'] = (f'FAILED for input {idx} at position {value_idx}: '
+                                                             f'expected {gold_value}, got {result_value}')
+                                if self._abort_on_invalid_results:
+                                    raise RuntimeError('invalid results')
+                                else:
+                                    raise CostFunctionError('invalid results')
+                    meta_data['result_check'] = 'SUCCESS'
             avg_runtime /= self._evaluations
             avg_runtime = float(ceil(avg_runtime))  # runtime can be ceiled, since nanoseconds are precise enough
         except cl.Error as e:
             meta_data['opencl_error_code'] = e.code
-            meta_data['opencl_error_what'] = e.what.what()
             meta_data['opencl_error_routine'] = e.routine
-            raise CostFunctionError(meta_data) from e
+            if self._abort_on_opencl_error:
+                raise e
+            else:
+                raise CostFunctionError(f'{e.routine} failed with error code {e.code}: {e.what.what()}') from e
         finally:
+            # log metadata
+            if self._log_file_writer:
+                self._log_file_writer.writerow((
+                    meta_data[c] if meta_data[c] is not None else ''
+                    for c in _LOG_FILE_COLUMNS
+                ))
+
             # free program resources
             del kernel
             del cl_program
 
-        return avg_runtime, meta_data
+        return avg_runtime
 
     def _init_command_queue(self):
         if self._platform_id is not None and self._device_id is not None:
@@ -315,7 +362,8 @@ class CostFunction:
                 raise ValueError(f'invalid platform id: {self._platform_id}')
             self._cl_platform = platforms[self._platform_id]
             if not self._silent:
-                print(f'selecting OpenCL platform {self._platform_id}: {self._cl_platform.get_info(cl.platform_info.NAME)}')
+                print(f'selecting OpenCL platform {self._platform_id}: '
+                      f'{self._cl_platform.get_info(cl.platform_info.NAME)}')
             devices = self._cl_platform.get_devices()
             if self._device_id >= len(devices):
                 raise ValueError(f'invalid device id: {self._device_id}')

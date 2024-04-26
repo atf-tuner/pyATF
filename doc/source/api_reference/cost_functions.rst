@@ -1,7 +1,9 @@
 Cost Functions
 ==============
 
-pyATF allows as cost function any arbitrary Lambda callable that takes as input a configuration of tuning parameters and returns a value for which operator :code:`<` is defined, e.g., :code:`float`.
+For high flexibility, the pyATF user can use any arbitrary, self-implemented cost function. pyATF allows as a cost function any Python function that takes as input a configuration of tuning parameters and returns a value of type :code:`pyatf.tuning_data.Cost` (currently defined as :code:`float`). pyATF interprets the cost function’s return value as the cost that has to be minimized during the auto-tuning process.
+
+A cost function can raise the error :code:`pyatf.tuning_data.CostFunctionError` if the configuration to measure is invalid (e.g. because the configuration crashes due to too excessive memory usage) — the configuration is then penalized by the search technique (e.g., with a penalty cost). If any other error is raised, the tuning run is aborted by pyATF.
 
 Pre-Implemented Cost Functions
 ------------------------------
@@ -10,11 +12,11 @@ pyATF provides the following pre-implemented cost functions:
 
 .. py:class:: pyatf.cost_functions.generic.CostFunction
 
-  .. py:function:: CostFunction(*run_command: str)
+  .. py:function:: CostFunction(run_command: str)
 
     :param run_command: Run command (executed via :code:`subprocess.run`).
 
-  .. py:function:: compile_command(*compile_command: str)
+  .. py:function:: compile_command(compile_command: str)
 
     :param compile_command: Compile command (executed via :code:`subprocess.run`).
 

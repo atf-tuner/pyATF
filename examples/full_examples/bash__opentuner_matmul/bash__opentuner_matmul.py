@@ -7,7 +7,7 @@ BLOCK_SIZE = TP('BLOCK_SIZE', Interval(1, 10))
 
 # Step 2: Implement a Cost Function
 run_command     = './tmp.bin'
-compile_command = 'g++ ../mmm_block.cpp -DBLOCK_SIZE=$BLOCK_SIZE -o ./tmp.bin'
+compile_command = 'g++ ./mmm_block.cpp -DBLOCK_SIZE=$BLOCK_SIZE -o ./tmp.bin'
 
 cf_matmul = generic.CostFunction(run_command).compile_command(compile_command)
 

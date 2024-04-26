@@ -2,21 +2,18 @@ import copy
 import time
 from datetime import timedelta, datetime
 from math import ceil
-from typing import Any, Dict, Optional, Tuple, Callable, List, Union
+from typing import Any, Dict, Optional, Tuple, Callable, List
 
 Configuration = Dict[str, Any]
 
 Cost = float
-MetaData = Dict[str, Any]
-
-# CostFunction returns Cost for a given Configuration and optional meta-data for logging purposes as a dictionary
-CostFunction = Callable[[Configuration], Union[Cost, Tuple[Cost, MetaData]]]
+CostFunction = Callable[[Configuration], Cost]
 
 
-# Error to be thrown in cost functions, when additional meta-data was collected
+# Error to be thrown in cost functions, when the configuration is expected to be interpreted as invalid
 class CostFunctionError(BaseException):
-    def __init__(self, meta_data: MetaData):
-        self.meta_data: MetaData = copy.deepcopy(meta_data)
+    def __init__(self, message):
+        self.message = message
 
 
 Coordinates = Tuple[float, ...]
@@ -28,7 +25,6 @@ class History:
         def __init__(self, timestamp: datetime, timedelta_since_tuning_start: timedelta,
                      evaluations: int, valid_evaluations: int,
                      configuration: Configuration, valid: bool, cost: Optional[Cost] = None,
-                     meta_data: Optional[Dict] = None,
                      search_space_coordinates: Optional[Coordinates] = None,
                      search_space_index: Optional[Index] = None):
             self._timestamp = timestamp
@@ -38,7 +34,6 @@ class History:
             self._configuration = configuration.copy()
             self._valid = valid
             self._cost = cost
-            self._meta_data = copy.deepcopy(meta_data)
             self._search_space_coordinates = search_space_coordinates
             self._search_space_index = search_space_index
 
@@ -71,10 +66,6 @@ class History:
             return self._cost
 
         @property
-        def meta_data(self):
-            return self._meta_data
-
-        @property
         def search_space_coordinates(self):
             return self._search_space_coordinates
 
@@ -97,8 +88,6 @@ class History:
                 'valid': self._valid,
                 'cost': self._cost
             }
-            if self._meta_data is not None:
-                json['meta_data'] = copy.deepcopy(self._meta_data)
             if self._search_space_coordinates is not None:
                 json['search_space_coordinates'] = self._search_space_coordinates
             if self._search_space_index is not None:
@@ -173,12 +162,6 @@ class TuningData:
         else:
             return self.improvement_history[-1].configuration
 
-    def meta_data_of_min_cost(self):
-        if self.improvement_history.is_empty():
-            return None
-        else:
-            return self.improvement_history[-1].meta_data
-
     def search_space_coordinates_of_min_cost(self):
         if self.improvement_history.is_empty():
             return None
@@ -216,7 +199,6 @@ class TuningData:
             return self.improvement_history[-1].valid_evaluations
 
     def record_evaluation(self, configuration: Configuration, valid: bool, cost: Optional[Cost] = None,
-                          meta_data: Optional[Dict] = None,
                           search_space_coordinates: Optional[Coordinates] = None,
                           search_space_index: Optional[Index] = None) -> datetime:
         now = self.tuning_start_timestamp + timedelta(
@@ -240,7 +222,6 @@ class TuningData:
             configuration,
             valid,
             cost,
-            meta_data,
             search_space_coordinates,
             search_space_index
         )
@@ -290,7 +271,6 @@ class TuningData:
             'number_of_evaluated_invalid_configurations': self.number_of_evaluated_invalid_configurations,
             'min_cost': self.min_cost(),
             'configuration_of_min_cost': copy.deepcopy(self.configuration_of_min_cost()),
-            'meta_data_of_min_cost': copy.deepcopy(self.meta_data_of_min_cost()),
             'search_space_coordinates_of_min_cost': self.search_space_coordinates_of_min_cost(),
             'search_space_index_of_min_cost': self.search_space_index_of_min_cost(),
             'timestamp_of_min_cost': timestamp_of_min_cost_str,
