@@ -93,9 +93,9 @@ pyATF's parameter constraints are described in detail [here](https://ieeexplore.
 
 ### Step 2: Implement a Cost Function
 
-For high flexibility, the pyATF user can use any arbitrary, self-implemented cost function. 
-pyATF allows as cost function any arbitrary Python function that takes as input a configuration of tuning parameters and returns a value for which operator `<` is defined.
-pyATF interprets the cost function’s return value (e.g., program’s runtime) as the cost that has to be minimized during the auto-tuning process.
+For high flexibility, the pyATF user can use any arbitrary, self-implemented cost function. pyATF allows as a cost function any Python function that takes as input a configuration of tuning parameters and returns a value of type `pyatf.tuning_data.Cost` (currently defined as `float`). pyATF interprets the cost function’s return value as the cost that has to be minimized during the auto-tuning process.
+
+A cost function can raise the error `pyatf.tuning_data.CostFunctionError` if the configuration to measure is invalid (e.g. because the configuration crashes due to too excessive memory usage) — the configuration is then penalized by the search technique (e.g., with a penalty cost). If any other error is raised, the tuning run is aborted by pyATF.
 
 For user’s convenience, pyATF provides pre-implemented cost functions for auto-tuning OpenCL and CUDA kernels in terms of runtime performance, because minimizing the runtime of OpenCL and CUDA applications is becoming increasingly important in the autotuning community.
 
@@ -161,7 +161,7 @@ pyATF currently provides the following, pre-implemented search techniques:
   1. `RoundRobin`
   2. `AUCBandit` (recommended as default)
 
-Further techniques can be easily added to pyATF by implementing a straightforward [interface](atf/search_techniques/search_technique.py).
+Further techniques can be easily added to pyATF by implementing a straightforward [interface](src/pyatf/search_techniques/search_technique.py).
 
 
 ### Abort Conditions
@@ -184,7 +184,7 @@ If no abort condition is set, pyATF uses `Evaluations( S )`, where `S` is the se
 
 To meet complex user requirements, abort conditions can be combined by using the logical operators `And` and `Or`, e.g., `Or( Evaluations(100) , Duration(minutes=5) )` to stop tuning after 100 evaluations or 5 minutes, whichever comes first.
 
-New abort conditions can be easily added to pyATF by implementing the corresponding [interface](atf/abort_conditions/abort_condition.py).
+New abort conditions can be easily added to pyATF by implementing the corresponding [interface](src/pyatf/abort_conditions/abort_condition.py).
 
 
 

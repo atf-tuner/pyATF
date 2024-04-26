@@ -14,7 +14,7 @@ from pyatf.tuning_data import TuningData, Configuration, Cost, History, Coordina
 class TestTuningData(unittest.TestCase):
     def _check_history(self,
                        gold_history: Tuple[Tuple[datetime, int, int, Configuration, bool, Optional[Cost],
-                       Optional[Dict], Optional[Coordinates], Optional[Index]], ...],
+                       Optional[Coordinates], Optional[Index]], ...],
                        tuning_start: datetime,
                        history: History):
         self.assertEqual(len(gold_history), len(history))
@@ -25,9 +25,8 @@ class TestTuningData(unittest.TestCase):
             gold_record_configuration = gold_record[3]
             gold_record_valid = gold_record[4]
             gold_record_cost = gold_record[5]
-            gold_record_meta_data = gold_record[6]
-            gold_record_coordinates = gold_record[7]
-            gold_record_index = gold_record[8]
+            gold_record_coordinates = gold_record[6]
+            gold_record_index = gold_record[7]
             self.assertEqual(gold_record_timestamp, record.timestamp)
             self.assertEqual(record.timestamp - tuning_start, record.timedelta_since_tuning_start)
             self.assertEqual(gold_record_num_evaluations, record.evaluations)
@@ -35,7 +34,6 @@ class TestTuningData(unittest.TestCase):
             self.assertEqual(gold_record_configuration, record.configuration)
             self.assertEqual(gold_record_valid, record.valid)
             self.assertEqual(gold_record_cost, record.cost)
-            self.assertEqual(gold_record_meta_data, record.meta_data)
             self.assertEqual(gold_record_coordinates, record.search_space_coordinates)
             self.assertEqual(gold_record_index, record.search_space_index)
 
@@ -75,7 +73,6 @@ class TestTuningData(unittest.TestCase):
         self.assertEqual(0, tuning_data.number_of_evaluated_invalid_configurations)
         self.assertIsNone(tuning_data.min_cost())
         self.assertIsNone(tuning_data.configuration_of_min_cost())
-        self.assertIsNone(tuning_data.meta_data_of_min_cost())
         self.assertIsNone(tuning_data.search_space_coordinates_of_min_cost())
         self.assertIsNone(tuning_data.search_space_index_of_min_cost())
         self.assertIsNone(tuning_data.timestamp_of_min_cost())
@@ -88,10 +85,9 @@ class TestTuningData(unittest.TestCase):
         config1 = search_space.get_configuration(coords1 or index1)
         valid1 = False
         cost1 = None
-        meta_data1 = {'error_code': -4}
-        timestamp1 = tuning_data.record_evaluation(config1, valid1, cost1, meta_data1, coords1, index1)
+        timestamp1 = tuning_data.record_evaluation(config1, valid1, cost1, coords1, index1)
         self._check_history((
-            (timestamp1, 1, 0, config1, valid1, cost1, meta_data1, coords1, index1),
+            (timestamp1, 1, 0, config1, valid1, cost1, coords1, index1),
         ), tuning_data.tuning_start_timestamp, tuning_data.history)
         self._check_history(tuple(), tuning_data.tuning_start_timestamp, tuning_data.improvement_history)
         self.assertEqual(1, tuning_data.number_of_evaluated_configurations)
@@ -99,7 +95,6 @@ class TestTuningData(unittest.TestCase):
         self.assertEqual(1, tuning_data.number_of_evaluated_invalid_configurations)
         self.assertIsNone(tuning_data.min_cost())
         self.assertIsNone(tuning_data.configuration_of_min_cost())
-        self.assertIsNone(tuning_data.meta_data_of_min_cost())
         self.assertIsNone(tuning_data.search_space_coordinates_of_min_cost())
         self.assertIsNone(tuning_data.search_space_index_of_min_cost())
         self.assertIsNone(tuning_data.timestamp_of_min_cost())
@@ -112,11 +107,10 @@ class TestTuningData(unittest.TestCase):
         config2 = search_space.get_configuration(coords2 or index2)
         valid2 = False
         cost2 = None
-        meta_data2 = {'error_code': -6}
-        timestamp2 = tuning_data.record_evaluation(config2, valid2, cost2, meta_data2, coords2, index2)
+        timestamp2 = tuning_data.record_evaluation(config2, valid2, cost2, coords2, index2)
         self._check_history((
-            (timestamp1, 1, 0, config1, valid1, cost1, meta_data1, coords1, index1),
-            (timestamp2, 2, 0, config2, valid2, cost2, meta_data2, coords2, index2),
+            (timestamp1, 1, 0, config1, valid1, cost1, coords1, index1),
+            (timestamp2, 2, 0, config2, valid2, cost2, coords2, index2),
         ), tuning_data.tuning_start_timestamp, tuning_data.history)
         self._check_history(tuple(), tuning_data.tuning_start_timestamp, tuning_data.improvement_history)
         self.assertEqual(2, tuning_data.number_of_evaluated_configurations)
@@ -124,7 +118,6 @@ class TestTuningData(unittest.TestCase):
         self.assertEqual(2, tuning_data.number_of_evaluated_invalid_configurations)
         self.assertIsNone(tuning_data.min_cost())
         self.assertIsNone(tuning_data.configuration_of_min_cost())
-        self.assertIsNone(tuning_data.meta_data_of_min_cost())
         self.assertIsNone(tuning_data.search_space_coordinates_of_min_cost())
         self.assertIsNone(tuning_data.search_space_index_of_min_cost())
         self.assertIsNone(tuning_data.timestamp_of_min_cost())
@@ -137,22 +130,20 @@ class TestTuningData(unittest.TestCase):
         config3 = search_space.get_configuration(coords3 or index3)
         valid3 = True
         cost3 = 10.23728
-        meta_data3 = None
-        timestamp3 = tuning_data.record_evaluation(config3, valid3, cost3, meta_data3, coords3, index3)
+        timestamp3 = tuning_data.record_evaluation(config3, valid3, cost3, coords3, index3)
         self._check_history((
-            (timestamp1, 1, 0, config1, valid1, cost1, meta_data1, coords1, index1),
-            (timestamp2, 2, 0, config2, valid2, cost2, meta_data2, coords2, index2),
-            (timestamp3, 3, 1, config3, valid3, cost3, meta_data3, coords3, index3),
+            (timestamp1, 1, 0, config1, valid1, cost1, coords1, index1),
+            (timestamp2, 2, 0, config2, valid2, cost2, coords2, index2),
+            (timestamp3, 3, 1, config3, valid3, cost3, coords3, index3),
         ), tuning_data.tuning_start_timestamp, tuning_data.history)
         self._check_history((
-            (timestamp3, 3, 1, config3, valid3, cost3, meta_data3, coords3, index3),
+            (timestamp3, 3, 1, config3, valid3, cost3, coords3, index3),
         ), tuning_data.tuning_start_timestamp, tuning_data.improvement_history)
         self.assertEqual(3, tuning_data.number_of_evaluated_configurations)
         self.assertEqual(1, tuning_data.number_of_evaluated_valid_configurations)
         self.assertEqual(2, tuning_data.number_of_evaluated_invalid_configurations)
         self.assertEqual(cost3, tuning_data.min_cost())
         self.assertEqual(config3, tuning_data.configuration_of_min_cost())
-        self.assertEqual(meta_data3, tuning_data.meta_data_of_min_cost())
         self.assertEqual(coords3, tuning_data.search_space_coordinates_of_min_cost())
         self.assertEqual(index3, tuning_data.search_space_index_of_min_cost())
         self.assertEqual(timestamp3, tuning_data.timestamp_of_min_cost())
@@ -165,23 +156,21 @@ class TestTuningData(unittest.TestCase):
         config4 = search_space.get_configuration(coords4 or index4)
         valid4 = False
         cost4 = None
-        meta_data4 = None
-        timestamp4 = tuning_data.record_evaluation(config4, valid4, cost4, meta_data4, coords4, index4)
+        timestamp4 = tuning_data.record_evaluation(config4, valid4, cost4, coords4, index4)
         self._check_history((
-            (timestamp1, 1, 0, config1, valid1, cost1, meta_data1, coords1, index1),
-            (timestamp2, 2, 0, config2, valid2, cost2, meta_data2, coords2, index2),
-            (timestamp3, 3, 1, config3, valid3, cost3, meta_data3, coords3, index3),
-            (timestamp4, 4, 1, config4, valid4, cost4, meta_data4, coords4, index4),
+            (timestamp1, 1, 0, config1, valid1, cost1, coords1, index1),
+            (timestamp2, 2, 0, config2, valid2, cost2, coords2, index2),
+            (timestamp3, 3, 1, config3, valid3, cost3, coords3, index3),
+            (timestamp4, 4, 1, config4, valid4, cost4, coords4, index4),
         ), tuning_data.tuning_start_timestamp, tuning_data.history)
         self._check_history((
-            (timestamp3, 3, 1, config3, valid3, cost3, meta_data3, coords3, index3),
+            (timestamp3, 3, 1, config3, valid3, cost3, coords3, index3),
         ), tuning_data.tuning_start_timestamp, tuning_data.improvement_history)
         self.assertEqual(4, tuning_data.number_of_evaluated_configurations)
         self.assertEqual(1, tuning_data.number_of_evaluated_valid_configurations)
         self.assertEqual(3, tuning_data.number_of_evaluated_invalid_configurations)
         self.assertEqual(cost3, tuning_data.min_cost())
         self.assertEqual(config3, tuning_data.configuration_of_min_cost())
-        self.assertEqual(meta_data3, tuning_data.meta_data_of_min_cost())
         self.assertEqual(coords3, tuning_data.search_space_coordinates_of_min_cost())
         self.assertEqual(index3, tuning_data.search_space_index_of_min_cost())
         self.assertEqual(timestamp3, tuning_data.timestamp_of_min_cost())
@@ -194,25 +183,23 @@ class TestTuningData(unittest.TestCase):
         config5 = search_space.get_configuration(coords5 or index5)
         valid5 = True
         cost5 = 8.46543
-        meta_data5 = {'compile_time': 929.224}
-        timestamp5 = tuning_data.record_evaluation(config5, valid5, cost5, meta_data5, coords5, index5)
+        timestamp5 = tuning_data.record_evaluation(config5, valid5, cost5, coords5, index5)
         self._check_history((
-            (timestamp1, 1, 0, config1, valid1, cost1, meta_data1, coords1, index1),
-            (timestamp2, 2, 0, config2, valid2, cost2, meta_data2, coords2, index2),
-            (timestamp3, 3, 1, config3, valid3, cost3, meta_data3, coords3, index3),
-            (timestamp4, 4, 1, config4, valid4, cost4, meta_data4, coords4, index4),
-            (timestamp5, 5, 2, config5, valid5, cost5, meta_data5, coords5, index5),
+            (timestamp1, 1, 0, config1, valid1, cost1, coords1, index1),
+            (timestamp2, 2, 0, config2, valid2, cost2, coords2, index2),
+            (timestamp3, 3, 1, config3, valid3, cost3, coords3, index3),
+            (timestamp4, 4, 1, config4, valid4, cost4, coords4, index4),
+            (timestamp5, 5, 2, config5, valid5, cost5, coords5, index5),
         ), tuning_data.tuning_start_timestamp, tuning_data.history)
         self._check_history((
-            (timestamp3, 3, 1, config3, valid3, cost3, meta_data3, coords3, index3),
-            (timestamp5, 5, 2, config5, valid5, cost5, meta_data5, coords5, index5),
+            (timestamp3, 3, 1, config3, valid3, cost3, coords3, index3),
+            (timestamp5, 5, 2, config5, valid5, cost5, coords5, index5),
         ), tuning_data.tuning_start_timestamp, tuning_data.improvement_history)
         self.assertEqual(5, tuning_data.number_of_evaluated_configurations)
         self.assertEqual(2, tuning_data.number_of_evaluated_valid_configurations)
         self.assertEqual(3, tuning_data.number_of_evaluated_invalid_configurations)
         self.assertEqual(cost5, tuning_data.min_cost())
         self.assertEqual(config5, tuning_data.configuration_of_min_cost())
-        self.assertEqual(meta_data5, tuning_data.meta_data_of_min_cost())
         self.assertEqual(coords5, tuning_data.search_space_coordinates_of_min_cost())
         self.assertEqual(index5, tuning_data.search_space_index_of_min_cost())
         self.assertEqual(timestamp5, tuning_data.timestamp_of_min_cost())
@@ -225,26 +212,24 @@ class TestTuningData(unittest.TestCase):
         config6 = search_space.get_configuration(coords6 or index6)
         valid6 = True
         cost6 = 9.78224
-        meta_data6 = {'compile_time': 55.125}
-        timestamp6 = tuning_data.record_evaluation(config6, valid6, cost6, meta_data6, coords6, index6)
+        timestamp6 = tuning_data.record_evaluation(config6, valid6, cost6, coords6, index6)
         self._check_history((
-            (timestamp1, 1, 0, config1, valid1, cost1, meta_data1, coords1, index1),
-            (timestamp2, 2, 0, config2, valid2, cost2, meta_data2, coords2, index2),
-            (timestamp3, 3, 1, config3, valid3, cost3, meta_data3, coords3, index3),
-            (timestamp4, 4, 1, config4, valid4, cost4, meta_data4, coords4, index4),
-            (timestamp5, 5, 2, config5, valid5, cost5, meta_data5, coords5, index5),
-            (timestamp6, 6, 3, config6, valid6, cost6, meta_data6, coords6, index6),
+            (timestamp1, 1, 0, config1, valid1, cost1, coords1, index1),
+            (timestamp2, 2, 0, config2, valid2, cost2, coords2, index2),
+            (timestamp3, 3, 1, config3, valid3, cost3, coords3, index3),
+            (timestamp4, 4, 1, config4, valid4, cost4, coords4, index4),
+            (timestamp5, 5, 2, config5, valid5, cost5, coords5, index5),
+            (timestamp6, 6, 3, config6, valid6, cost6, coords6, index6),
         ), tuning_data.tuning_start_timestamp, tuning_data.history)
         self._check_history((
-            (timestamp3, 3, 1, config3, valid3, cost3, meta_data3, coords3, index3),
-            (timestamp5, 5, 2, config5, valid5, cost5, meta_data5, coords5, index5),
+            (timestamp3, 3, 1, config3, valid3, cost3, coords3, index3),
+            (timestamp5, 5, 2, config5, valid5, cost5, coords5, index5),
         ), tuning_data.tuning_start_timestamp, tuning_data.improvement_history)
         self.assertEqual(6, tuning_data.number_of_evaluated_configurations)
         self.assertEqual(3, tuning_data.number_of_evaluated_valid_configurations)
         self.assertEqual(3, tuning_data.number_of_evaluated_invalid_configurations)
         self.assertEqual(cost5, tuning_data.min_cost())
         self.assertEqual(config5, tuning_data.configuration_of_min_cost())
-        self.assertEqual(meta_data5, tuning_data.meta_data_of_min_cost())
         self.assertEqual(coords5, tuning_data.search_space_coordinates_of_min_cost())
         self.assertEqual(index5, tuning_data.search_space_index_of_min_cost())
         self.assertEqual(timestamp5, tuning_data.timestamp_of_min_cost())

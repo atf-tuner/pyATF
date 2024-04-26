@@ -1,13 +1,14 @@
+import csv
 import inspect
 import time
 from math import ceil
-from typing import Union, Tuple, Callable, Optional, Set, Dict, Iterable, Any
+from typing import Union, Tuple, Callable, Optional, Set, Dict, Iterable, Any, TextIO
 
 import numpy
 from cuda import cuda, nvrtc
 
 from pyatf.result_check import equality
-from pyatf.tuning_data import Configuration, Cost, MetaData, CostFunctionError
+from pyatf.tuning_data import Configuration, Cost, CostFunctionError
 
 cuda.cuInit(0)
 
@@ -45,8 +46,18 @@ class Kernel:
 
 Input = Union[numpy.ndarray, numpy.generic]
 
+_LOG_FILE_COLUMNS = ('compile_time_ns',
+                     'cuda_error',
+                     'nvrtc_error',
+                     'gold_check',
+                     'checked_inputs')
+
 
 class CostFunction:
+    class _CUDAError(BaseException):
+        def __init__(self, message: str):
+            self.message = message
+
     def __init__(self, kernel: Kernel):
         self._kernel = kernel
 
@@ -70,9 +81,15 @@ class CostFunction:
 
         self._gold_data: Dict[int, Tuple[Input, Callable[[numpy.generic, numpy.generic], bool]]] = {}
         self._gold_cmp_buffer: Dict[int, Input] = {}
+        self._abort_on_invalid_results: bool = False
+
+        self._abort_on_cuda_error: bool = False
 
         self._warmups: int = 0
         self._evaluations: int = 1
+
+        self._log_file: Optional[TextIO] = None
+        self._log_file_writer = None
 
         self._objects_to_free_on_error: Dict[Any, Callable] = {}
         self._cu_device: Optional[cuda.CUdevice] = None
@@ -88,32 +105,25 @@ class CostFunction:
     def _safe_call(
             self,
             returns: Union[cuda.CUresult, nvrtc.nvrtcResult, Tuple[Union[cuda.CUresult, nvrtc.nvrtcResult], ...]],
-            message: str, meta_data: Optional[MetaData] = None
+            message: str, meta_data: Dict[str, Any] = None
     ):
         if isinstance(returns, tuple):
             err = returns[0]
             returns = returns[1:]
         else:
             err = returns
-        raise_error = False
         if isinstance(err, cuda.CUresult):
             if err != cuda.CUresult.CUDA_SUCCESS:
                 if meta_data is not None:
-                    meta_data['cuda_error'] = str(err)
-                raise_error = True
+                    meta_data['cuda_error'] = err
+                raise CostFunction._CUDAError(f'CUDA failed with error: {err}\n{message}')
         elif isinstance(err, nvrtc.nvrtcResult):
             if err != nvrtc.nvrtcResult.NVRTC_SUCCESS:
                 if meta_data is not None:
-                    meta_data['nvrtc_error'] = str(err)
-                raise_error = True
+                    meta_data['nvrtc_error'] = err
+                raise CostFunction._CUDAError(f'CUDA failed with error: {err}\n{message}')
         else:
-            raise_error = True
-        if raise_error:
-            self._free_objects_before_error()
-            if meta_data is not None:
-                raise CostFunctionError(meta_data)
-            else:
-                raise ValueError(f'CUDA failed with error: {err}\n{message}')
+            raise RuntimeError(str(err))
         if len(returns) == 1:
             return returns[0]
         else:
@@ -122,9 +132,14 @@ class CostFunction:
     def __del__(self):
         self._free_buffers()
         self._free_device()
+        if self._log_file:
+            self._log_file_writer = None
+            self._log_file.close()
+            self._log_file = None
 
     def silent(self, silent: bool):
         self._silent = silent
+        return self
 
     def device_id(self, device_id: int):
         self._free_buffers()
@@ -193,177 +208,220 @@ class CostFunction:
             self._gold_cmp_buffer[index] = gold_buffer.copy()
         return self
 
+    def abort_on_invalid_results(self, abort_on_invalid_results: bool):
+        self._abort_on_invalid_results = abort_on_invalid_results
+        return self
+
+    def abort_on_cuda_error(self, abort_on_cuda_error: bool):
+        self._abort_on_cuda_error = abort_on_cuda_error
+        return self
+
     def warmups(self, warmups: int):
         self._warmups = warmups
+        return self
 
     def evaluations(self, evaluations: int):
         self._evaluations = evaluations
+        return self
 
-    def __call__(self, configuration: Configuration) -> Tuple[Cost, MetaData]:
+    def log_file(self, log_file_path: str):
+        if self._log_file:
+            self._log_file_writer = None
+            self._log_file.close()
+            self._log_file = None
+        if log_file_path:
+            self._log_file = open(log_file_path, 'w')
+            self._log_file_writer = csv.writer(self._log_file)
+            self._log_file_writer.writerow(_LOG_FILE_COLUMNS)
+        return self
+
+    def __call__(self, configuration: Configuration) -> Cost:
         if self._device_id is None:
             raise ValueError('no CUDA device was selected')
 
-        meta_data = {}
+        meta_data: Dict[str, Any] = {c: None for c in _LOG_FILE_COLUMNS}
 
-        # create & compile program
-        nvrtc_program = self._safe_call(nvrtc.nvrtcCreateProgram(str.encode(self._kernel.source),
-                                                                 str.encode(self._kernel.name + '.cu'),
-                                                                 0, [], []),
-                                        'failed to create NVRTC program', meta_data)
-        self._objects_to_free_on_error[nvrtc_program] = nvrtc.nvrtcDestroyProgram
-        opts = []
-        for flag in self._kernel.flags:
-            opts.append(str.encode(flag))
-        for tp_name, tp_value in configuration.items():
-            opts.append(str.encode(f'-D{tp_name}={tp_value}'))
-        compile_start_ns = time.perf_counter_ns()
-        self._safe_call(nvrtc.nvrtcCompileProgram(nvrtc_program, len(opts), opts), 'failed to compile NVRTC program',
-                        meta_data)
-        compile_end_ns = time.perf_counter_ns()
-        meta_data['compile_time_ns'] = compile_end_ns - compile_start_ns
-        ptx_size = self._safe_call(nvrtc.nvrtcGetPTXSize(nvrtc_program), 'failed to get PTX size',
-                                   meta_data)
-        ptx = b' ' * ptx_size
-        self._safe_call(nvrtc.nvrtcGetPTX(nvrtc_program, ptx), 'failed to get PTX code',
-                        meta_data)
+        try:
+            # create & compile program
+            nvrtc_program = self._safe_call(nvrtc.nvrtcCreateProgram(str.encode(self._kernel.source),
+                                                                     str.encode(self._kernel.name + '.cu'),
+                                                                     0, [], []),
+                                            'failed to create NVRTC program', meta_data)
+            self._objects_to_free_on_error[nvrtc_program] = nvrtc.nvrtcDestroyProgram
+            opts = []
+            for flag in self._kernel.flags:
+                opts.append(str.encode(flag))
+            for tp_name, tp_value in configuration.items():
+                opts.append(str.encode(f'-D{tp_name}={tp_value}'))
+            compile_start_ns = time.perf_counter_ns()
+            self._safe_call(nvrtc.nvrtcCompileProgram(nvrtc_program, len(opts), opts),
+                            'failed to compile NVRTC program', meta_data)
+            compile_end_ns = time.perf_counter_ns()
+            meta_data['compile_time_ns'] = compile_end_ns - compile_start_ns
+            ptx_size = self._safe_call(nvrtc.nvrtcGetPTXSize(nvrtc_program),
+                                       'failed to get PTX size', meta_data)
+            ptx = b' ' * ptx_size
+            self._safe_call(nvrtc.nvrtcGetPTX(nvrtc_program, ptx),
+                            'failed to get PTX code', meta_data)
 
-        # load PTX as module and retrieve function
-        ptx = numpy.char.array(ptx)
-        module = self._safe_call(cuda.cuModuleLoadData(ptx.ctypes.data), 'failed to load PTX',
-                                 meta_data)
-        self._objects_to_free_on_error[module] = cuda.cuModuleUnload
-        kernel = self._safe_call(cuda.cuModuleGetFunction(module, str.encode(self._kernel.name)),
-                                 'failed to get module function', meta_data)
+            # load PTX as module and retrieve function
+            ptx = numpy.char.array(ptx)
+            module = self._safe_call(cuda.cuModuleLoadData(ptx.ctypes.data),
+                                     'failed to load PTX', meta_data)
+            self._objects_to_free_on_error[module] = cuda.cuModuleUnload
+            kernel = self._safe_call(cuda.cuModuleGetFunction(module, str.encode(self._kernel.name)),
+                                     'failed to get module function', meta_data)
 
-        # calculate grid and block dim
-        grid_dim = [1, 1, 1]
-        if self._grid_dim_x_tps is None:
-            grid_dim[0] = self._grid_dim_x
-        else:
-            grid_dim[0] = int(self._grid_dim_x(**{
-                tp_name: configuration[tp_name] for tp_name in self._grid_dim_x_tps
-            }))
-        if self._grid_dim_y_tps is None:
-            grid_dim[1] = self._grid_dim_y
-        else:
-            grid_dim[1] = int(self._grid_dim_y(**{
-                tp_name: configuration[tp_name] for tp_name in self._grid_dim_y_tps
-            }))
-        if self._grid_dim_z_tps is None:
-            grid_dim[2] = self._grid_dim_z
-        else:
-            grid_dim[2] = int(self._grid_dim_z(**{
-                tp_name: configuration[tp_name] for tp_name in self._grid_dim_z_tps
-            }))
-        block_dim = [1, 1, 1]
-        if self._block_dim_x_tps is None:
-            block_dim[0] = self._block_dim_x
-        else:
-            block_dim[0] = int(self._block_dim_x(**{
-                tp_name: configuration[tp_name] for tp_name in self._block_dim_x_tps
-            }))
-        if self._block_dim_y_tps is None:
-            block_dim[1] = self._block_dim_y
-        else:
-            block_dim[1] = int(self._block_dim_y(**{
-                tp_name: configuration[tp_name] for tp_name in self._block_dim_y_tps
-            }))
-        if self._block_dim_z_tps is None:
-            block_dim[2] = self._block_dim_z
-        else:
-            block_dim[2] = int(self._block_dim_z(**{
-                tp_name: configuration[tp_name] for tp_name in self._block_dim_z_tps
-            }))
-
-        # prepare kernel arguments
-        args = []
-        for idx, inp in self._inputs.items():
-            if isinstance(inp, numpy.ndarray):
-                args.append(numpy.array([int(self._cu_device_ptr[idx])], dtype=numpy.uint64))
+            # calculate grid and block dim
+            grid_dim = [1, 1, 1]
+            if self._grid_dim_x_tps is None:
+                grid_dim[0] = self._grid_dim_x
             else:
-                args.append(numpy.array([inp], dtype=inp.dtype))
-        args = numpy.array([arg.ctypes.data for arg in args], dtype=numpy.uint64)
+                grid_dim[0] = int(self._grid_dim_x(**{
+                    tp_name: configuration[tp_name] for tp_name in self._grid_dim_x_tps
+                }))
+            if self._grid_dim_y_tps is None:
+                grid_dim[1] = self._grid_dim_y
+            else:
+                grid_dim[1] = int(self._grid_dim_y(**{
+                    tp_name: configuration[tp_name] for tp_name in self._grid_dim_y_tps
+                }))
+            if self._grid_dim_z_tps is None:
+                grid_dim[2] = self._grid_dim_z
+            else:
+                grid_dim[2] = int(self._grid_dim_z(**{
+                    tp_name: configuration[tp_name] for tp_name in self._grid_dim_z_tps
+                }))
+            block_dim = [1, 1, 1]
+            if self._block_dim_x_tps is None:
+                block_dim[0] = self._block_dim_x
+            else:
+                block_dim[0] = int(self._block_dim_x(**{
+                    tp_name: configuration[tp_name] for tp_name in self._block_dim_x_tps
+                }))
+            if self._block_dim_y_tps is None:
+                block_dim[1] = self._block_dim_y
+            else:
+                block_dim[1] = int(self._block_dim_y(**{
+                    tp_name: configuration[tp_name] for tp_name in self._block_dim_y_tps
+                }))
+            if self._block_dim_z_tps is None:
+                block_dim[2] = self._block_dim_z
+            else:
+                block_dim[2] = int(self._block_dim_z(**{
+                    tp_name: configuration[tp_name] for tp_name in self._block_dim_z_tps
+                }))
 
-        # warmups
-        for _ in range(self._warmups):
-            self._cpy_to_device()
-            self._safe_call(cuda.cuLaunchKernel(kernel, *grid_dim, *block_dim, 0, self._cu_stream, args.ctypes.data, 0),
-                            'failed to launch kernel', meta_data)
+            # prepare kernel arguments
+            args = []
+            for idx, inp in self._inputs.items():
+                if isinstance(inp, numpy.ndarray):
+                    args.append(numpy.array([int(self._cu_device_ptr[idx])], dtype=numpy.uint64))
+                else:
+                    args.append(numpy.array([inp], dtype=inp.dtype))
+            args = numpy.array([arg.ctypes.data for arg in args], dtype=numpy.uint64)
 
-        # evaluations
-        avg_runtime = 0.0
-        for e in range(self._evaluations):
-            self._cpy_to_device()
-            pre_kernel_event = self._safe_call(cuda.cuEventCreate(0), 'failed to create pre-kernel event', meta_data)
-            self._objects_to_free_on_error[pre_kernel_event] = cuda.cuEventDestroy
-            post_kernel_event = self._safe_call(cuda.cuEventCreate(0), 'failed to create post-kernel event', meta_data)
-            self._objects_to_free_on_error[post_kernel_event] = cuda.cuEventDestroy
-            self._safe_call(cuda.cuEventRecord(pre_kernel_event, self._cu_stream),
-                            'failed to record pre-kernel event', meta_data)
-            self._safe_call(cuda.cuLaunchKernel(kernel, *grid_dim, *block_dim, 0, self._cu_stream, args.ctypes.data, 0),
-                            'failed to launch kernel', meta_data)
-            self._safe_call(cuda.cuEventRecord(post_kernel_event, self._cu_stream),
-                            'failed to record post-kernel event', meta_data)
-            self._safe_call(cuda.cuEventSynchronize(post_kernel_event),
-                            'failed to synchronize with post-kernel event', meta_data)
-            avg_runtime += self._safe_call(cuda.cuEventElapsedTime(pre_kernel_event, post_kernel_event),
-                                           'failed to get elapsed time between kernel events', meta_data) * 1000000
-            del self._objects_to_free_on_error[post_kernel_event]
-            self._safe_call(cuda.cuEventDestroy(post_kernel_event),
-                            'failed to destroy post-kernel event', meta_data)
-            del self._objects_to_free_on_error[pre_kernel_event]
-            self._safe_call(cuda.cuEventDestroy(pre_kernel_event),
-                            'failed to destroy pre-kernel event', meta_data)
-            # result check
-            if e == 0 and self._gold_data:
-                self._cpy_to_host(self._gold_cmp_buffer)
-                for idx, (gold_values, comparator) in self._gold_data.items():
-                    result_values = self._gold_cmp_buffer[idx]
-                    if result_values.size != gold_values.size:
-                        meta_data['result_check'] = {
-                            'status': 'failed',
-                            'input': idx,
-                            'reason': 'result size is not equal to gold size'
-                        }
-                        self._free_objects_before_error()
-                        raise CostFunctionError(meta_data)
-                    for value_idx, (result_value, gold_value) in enumerate(zip(result_values, gold_values)):
-                        if not comparator(result_value, gold_value):
-                            meta_data['result_check'] = {
-                                'status': 'failed',
-                                'input': idx,
-                                'position': value_idx,
-                                'expected': str(gold_value),
-                                'actual': str(result_value)
-                            }
-                            self._free_objects_before_error()
-                            raise CostFunctionError(meta_data)
-                meta_data['result_check'] = {'status': 'success', 'checked_inputs': tuple(self._gold_data.keys())}
-        avg_runtime /= self._evaluations
-        avg_runtime = float(ceil(avg_runtime))  # runtime can be ceiled, since nanoseconds are precise enough
+            # warmups
+            for _ in range(self._warmups):
+                self._cpy_to_device()
+                self._safe_call(cuda.cuLaunchKernel(kernel, *grid_dim, *block_dim, 0,
+                                                    self._cu_stream, args.ctypes.data, 0),
+                                'failed to launch kernel', meta_data)
 
-        # free program resources
-        del self._objects_to_free_on_error[module]
-        self._safe_call(cuda.cuModuleUnload(module), 'failed to unload module', meta_data)
-        del self._objects_to_free_on_error[nvrtc_program]
-        self._safe_call(nvrtc.nvrtcDestroyProgram(nvrtc_program), 'failed to destroy NVRTC program', meta_data)
+            # evaluations
+            avg_runtime = 0.0
+            for e in range(self._evaluations):
+                self._cpy_to_device()
+                pre_kernel_event = self._safe_call(cuda.cuEventCreate(0),
+                                                   'failed to create pre-kernel event', meta_data)
+                self._objects_to_free_on_error[pre_kernel_event] = cuda.cuEventDestroy
+                post_kernel_event = self._safe_call(cuda.cuEventCreate(0),
+                                                    'failed to create post-kernel event', meta_data)
+                self._objects_to_free_on_error[post_kernel_event] = cuda.cuEventDestroy
+                self._safe_call(cuda.cuEventRecord(pre_kernel_event, self._cu_stream),
+                                'failed to record pre-kernel event', meta_data)
+                self._safe_call(cuda.cuLaunchKernel(kernel, *grid_dim, *block_dim, 0,
+                                                    self._cu_stream, args.ctypes.data, 0),
+                                'failed to launch kernel', meta_data)
+                self._safe_call(cuda.cuEventRecord(post_kernel_event, self._cu_stream),
+                                'failed to record post-kernel event', meta_data)
+                self._safe_call(cuda.cuEventSynchronize(post_kernel_event),
+                                'failed to synchronize with post-kernel event', meta_data)
+                avg_runtime += self._safe_call(cuda.cuEventElapsedTime(pre_kernel_event, post_kernel_event),
+                                               'failed to get elapsed time between kernel events', meta_data) * 1000000
+                del self._objects_to_free_on_error[post_kernel_event]
+                self._safe_call(cuda.cuEventDestroy(post_kernel_event),
+                                'failed to destroy post-kernel event', meta_data)
+                del self._objects_to_free_on_error[pre_kernel_event]
+                self._safe_call(cuda.cuEventDestroy(pre_kernel_event),
+                                'failed to destroy pre-kernel event', meta_data)
+                # result check
+                if e == 0 and self._gold_data:
+                    self._cpy_to_host(self._gold_cmp_buffer)
+                    meta_data['checked_inputs'] = []
+                    for idx, (gold_values, comparator) in self._gold_data.items():
+                        meta_data['checked_inputs'].append(idx)
+                        result_values = self._gold_cmp_buffer[idx]
+                        if result_values.size != gold_values.size:
+                            meta_data['result_check'] = f'FAILED for input {idx}: result size is not equal to gold size'
+                            if self._abort_on_invalid_results:
+                                raise RuntimeError('invalid results')
+                            else:
+                                raise CostFunctionError('invalid results')
+                        for value_idx, (result_value, gold_value) in enumerate(zip(result_values, gold_values)):
+                            if not comparator(result_value, gold_value):
+                                meta_data['result_check'] = (f'FAILED for input {idx} at position {value_idx}: '
+                                                             f'expected {gold_value}, got {result_value}')
+                                if self._abort_on_invalid_results:
+                                    raise RuntimeError('invalid results')
+                                else:
+                                    raise CostFunctionError('invalid results')
+                    meta_data['result_check'] = 'SUCCESS'
+            avg_runtime /= self._evaluations
+            avg_runtime = float(ceil(avg_runtime))  # runtime can be ceiled, since nanoseconds are precise enough
 
-        return avg_runtime, meta_data
+            # free program resources
+            del self._objects_to_free_on_error[module]
+            self._safe_call(cuda.cuModuleUnload(module),
+                            'failed to unload module', meta_data)
+            del self._objects_to_free_on_error[nvrtc_program]
+            self._safe_call(nvrtc.nvrtcDestroyProgram(nvrtc_program),
+                            'failed to destroy NVRTC program', meta_data)
+        except CostFunction._CUDAError as e:
+            self._free_objects_before_error()
+            if self._abort_on_cuda_error:
+                raise e
+            else:
+                raise CostFunctionError(e.message) from e
+        finally:
+            # log metadata
+            if self._log_file_writer:
+                self._log_file_writer.writerow((
+                    meta_data[c] if meta_data[c] is not None else ''
+                    for c in _LOG_FILE_COLUMNS
+                ))
+
+        return avg_runtime
 
     def _init_device(self):
         if self._device_id is not None:
-            self._cu_device = self._safe_call(cuda.cuDeviceGet(self._device_id), 'failed to retrieve device handle')
+            self._cu_device = self._safe_call(cuda.cuDeviceGet(self._device_id),
+                                              'failed to retrieve device handle')
             if not self._silent:
-                device_name = self._safe_call(cuda.cuDeviceGetName(1024, self._cu_device), 'failed to get device name')
+                device_name = self._safe_call(cuda.cuDeviceGetName(1024, self._cu_device),
+                                              'failed to get device name')
                 device_name = str(device_name, encoding='ascii').strip()[:-1]
                 print(f'selecting CUDA device {self._device_id}: {device_name}')
-            self._cu_context = self._safe_call(cuda.cuCtxCreate(0, self._cu_device), 'failed to create context')
-            self._cu_stream = self._safe_call(cuda.cuStreamCreate(0), 'failed to create stream')
+            self._cu_context = self._safe_call(cuda.cuCtxCreate(0, self._cu_device),
+                                               'failed to create context')
+            self._cu_stream = self._safe_call(cuda.cuStreamCreate(0),
+                                              'failed to create stream')
 
     def _alloc_buffers(self):
         if self._cu_context is not None:
             self._cu_device_ptr = {
-                idx: self._safe_call(cuda.cuMemAlloc(inp.nbytes), f'failed to allocate CUDA device memory for input {idx}')
+                idx: self._safe_call(cuda.cuMemAlloc(inp.nbytes),
+                                     f'failed to allocate CUDA device memory for input {idx}')
                 for idx, inp in self._inputs.items() if isinstance(inp, numpy.ndarray)
             }
 
@@ -390,14 +448,17 @@ class CostFunction:
 
     def _free_buffers(self):
         for idx, deviceptr in self._cu_device_ptr.items():
-            self._safe_call(cuda.cuMemFree(deviceptr), f'failed to free CUDA device memory for input {idx}')
+            self._safe_call(cuda.cuMemFree(deviceptr),
+                            f'failed to free CUDA device memory for input {idx}')
         self._cu_device_ptr.clear()
 
     def _free_device(self):
         if self._cu_stream is not None:
-            self._safe_call(cuda.cuStreamDestroy(self._cu_stream), 'failed to destroy stream')
+            self._safe_call(cuda.cuStreamDestroy(self._cu_stream),
+                            'failed to destroy stream')
             self._cu_stream = None
         if self._cu_context is not None:
-            self._safe_call(cuda.cuCtxDestroy(self._cu_context), 'failed to destroy context')
+            self._safe_call(cuda.cuCtxDestroy(self._cu_context),
+                            'failed to destroy context')
             self._cu_context = None
         self._cu_device = None

@@ -86,8 +86,6 @@ Tuner
 
   .. py:function:: configuration_of_min_cost()
 
-  .. py:function:: meta_data_of_min_cost()
-
   .. py:function:: search_space_coordinates_of_min_cost()
 
   .. py:function:: search_space_index_of_min_cost()

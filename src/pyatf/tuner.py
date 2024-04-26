@@ -70,7 +70,7 @@ class Tuner:
                 self._get_next_coordinates_or_indices = self._search_technique.get_next_indices
                 self._coordinates_or_index_param_name = 'search_space_index'
             self._coordinates_or_indices: Set[Union[Coordinates, Index]] = set()
-            self._costs: Dict[Coordinates, Union[Coordinates, Index]] = {}
+            self._costs: Dict[Union[Coordinates, Index], Cost] = {}
 
             # generate search space
             search_space_generation_start = time.perf_counter_ns()
@@ -188,18 +188,16 @@ class Tuner:
 
             # run cost function
             valid = True
-            meta_data = None
-            cost = None
             try:
-                cost_function_return_values = self._cost_function(config)
-                if isinstance(cost_function_return_values, tuple):
-                    cost, meta_data = cost_function_return_values
-                else:
-                    cost = cost_function_return_values
+                cost = self._cost_function(config)
             except CostFunctionError as e:
-                meta_data = e.meta_data
+                if not self._silent:
+                    print('\r' + ' ' * self._last_line_length + '\r', end='')
+                    print('Error raised: ' + e.message)
+                    self._last_line_length = 0
+                cost = None
                 valid = False
-            timestamp = self._tuning_data.record_evaluation(config, valid, cost, meta_data, **{
+            timestamp = self._tuning_data.record_evaluation(config, valid, cost, **{
                 self._coordinates_or_index_param_name: coords_or_index
             })
             self._costs[coords_or_index] = cost
@@ -275,7 +273,7 @@ class Tuner:
                 None
             )
             self._tuning_run.initialize()
-        if cost_function != self._tuning_run.cost_function:
+        if cost_function is not self._tuning_run.cost_function:
             raise ValueError('a tuning run with another cost function is already in progress')
         self._tuning_run.make_step()
 

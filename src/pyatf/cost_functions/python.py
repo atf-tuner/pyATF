@@ -1,5 +1,5 @@
 import time
-from typing import Type, Tuple, Any, Optional, Dict
+from typing import Type, Tuple, Any, Dict
 
 from pyatf.tuning_data import Configuration, Cost
 
