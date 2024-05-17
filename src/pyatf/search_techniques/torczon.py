@@ -111,31 +111,30 @@ class Torczon(SearchTechnique):
         self._cost_improved = False
 
     def _generate_next_simplex(self):
-        match self._current_state:
-            case Torczon.State.TORC_INITIAL:
-                self._test_simplex.vertices = self._reflect_base_simplex_vertices()
+        if self._current_state == Torczon.State.TORC_INITIAL:
+            self._test_simplex.vertices = self._reflect_base_simplex_vertices()
+            self._test_simplex.best_vertex = 0
+            self._current_simplex = self._test_simplex
+            self._switch_state(Torczon.State.TORC_REFLECTED)
+        elif self._current_state == Torczon.State.TORC_REFLECTED:
+            if self._cost_improved:
+                self._base_simplex = copy.copy(self._test_simplex)
+                self._test_simplex.vertices = self._expand_base_simplex_vertices()
                 self._test_simplex.best_vertex = 0
                 self._current_simplex = self._test_simplex
-                self._switch_state(Torczon.State.TORC_REFLECTED)
-            case Torczon.State.TORC_REFLECTED:
-                if self._cost_improved:
-                    self._base_simplex = copy.copy(self._test_simplex)
-                    self._test_simplex.vertices = self._expand_base_simplex_vertices()
-                    self._test_simplex.best_vertex = 0
-                    self._current_simplex = self._test_simplex
-                    self._switch_state(Torczon.State.TORC_EXPANDED)
-                else:
-                    self._base_simplex.vertices = self._contract_base_simplex_vertices()
-                    self._base_simplex.best_vertex = 0
-                    self._current_simplex = self._base_simplex
-                    self._best_cost = float('inf')
-                    self._current_center = 0
-                    self._switch_state(Torczon.State.TORC_INITIAL)
-            case Torczon.State.TORC_EXPANDED:
-                if self._cost_improved:
-                    self._base_simplex = copy.copy(self._test_simplex)
-                self._current_center = self._base_simplex.best_vertex
-                self._test_simplex.vertices = self._reflect_base_simplex_vertices()
-                self._test_simplex.best_vertex = 0
-                self._current_simplex = self._test_simplex
-                self._switch_state(Torczon.State.TORC_REFLECTED)
+                self._switch_state(Torczon.State.TORC_EXPANDED)
+            else:
+                self._base_simplex.vertices = self._contract_base_simplex_vertices()
+                self._base_simplex.best_vertex = 0
+                self._current_simplex = self._base_simplex
+                self._best_cost = float('inf')
+                self._current_center = 0
+                self._switch_state(Torczon.State.TORC_INITIAL)
+        elif self._current_state == Torczon.State.TORC_EXPANDED:
+            if self._cost_improved:
+                self._base_simplex = copy.copy(self._test_simplex)
+            self._current_center = self._base_simplex.best_vertex
+            self._test_simplex.vertices = self._reflect_base_simplex_vertices()
+            self._test_simplex.best_vertex = 0
+            self._current_simplex = self._test_simplex
+            self._switch_state(Torczon.State.TORC_REFLECTED)

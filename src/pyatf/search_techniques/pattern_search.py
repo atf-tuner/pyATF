@@ -52,22 +52,21 @@ class PatternSearch(SearchTechnique):
         pass
 
     def get_next_coordinates(self) -> Set[Coordinates]:
-        match self._current_state:
-            case PatternSearch.State.INITIALIZATION:
-                self._exploratory_coordinates = list(self._base)
-                self._pattern_coordinates = list(self._base)
-                return {clamp_coordinates_capped(self._base)}
-            case PatternSearch.State.EXPLORATORY_PLUS:
-                self._exploratory_coordinates[self._current_parameter] += self._step_size
-                return {clamp_coordinates_capped(tuple(self._exploratory_coordinates))}
-            case PatternSearch.State.EXPLORATORY_MINUS:
-                if self._trigger:
-                    self._exploratory_coordinates[self._current_parameter] -= 2 * self._step_size
-                else:
-                    self._exploratory_coordinates[self._current_parameter] -= self._step_size
-                return {clamp_coordinates_capped(tuple(self._exploratory_coordinates))}
-            case PatternSearch.State.PATTERN:
-                return {clamp_coordinates_capped(tuple(self._pattern_coordinates))}
+        if self._current_state == PatternSearch.State.INITIALIZATION:
+            self._exploratory_coordinates = list(self._base)
+            self._pattern_coordinates = list(self._base)
+            return {clamp_coordinates_capped(self._base)}
+        elif self._current_state == PatternSearch.State.EXPLORATORY_PLUS:
+            self._exploratory_coordinates[self._current_parameter] += self._step_size
+            return {clamp_coordinates_capped(tuple(self._exploratory_coordinates))}
+        elif self._current_state == PatternSearch.State.EXPLORATORY_MINUS:
+            if self._trigger:
+                self._exploratory_coordinates[self._current_parameter] -= 2 * self._step_size
+            else:
+                self._exploratory_coordinates[self._current_parameter] -= self._step_size
+            return {clamp_coordinates_capped(tuple(self._exploratory_coordinates))}
+        elif self._current_state == PatternSearch.State.PATTERN:
+            return {clamp_coordinates_capped(tuple(self._pattern_coordinates))}
 
     def report_costs(self, costs: Dict[Coordinates, Cost]):
         if len(costs) != 1:
@@ -75,60 +74,59 @@ class PatternSearch(SearchTechnique):
         coordinates, cost = next(iter(costs.items()))
         if cost is None:
             cost = float('inf')
-        match self._current_state:
-            case PatternSearch.State.INITIALIZATION:
-                if cost == float('inf'):
-                    self._base = tuple(1.0 - random.random() for _ in range(self._dimensionality))
-                else:
-                    self._base_fitness = cost
-                    self._exploratory_coordinates_fitness = cost
-                    self._pattern_coordinates_fitness = cost
-                    self._current_state = PatternSearch.State.EXPLORATORY_PLUS
-            case PatternSearch.State.EXPLORATORY_PLUS:
-                if cost < self._exploratory_coordinates_fitness:
-                    self._exploratory_coordinates[self._current_parameter] += self._step_size
-                    if (self._exploratory_coordinates[self._current_parameter] <= 0.0
-                            or self._exploratory_coordinates[self._current_parameter] > 1.0):
-                        self._exploratory_coordinates[self._current_parameter] = math.fmod(
-                            abs(self._exploratory_coordinates[self._current_parameter]), 1.0)
-                    self._exploratory_coordinates_fitness = cost
-                    self._trigger = True
-                self._current_state = PatternSearch.State.EXPLORATORY_MINUS
-            case PatternSearch.State.EXPLORATORY_MINUS:
-                if cost < self._exploratory_coordinates_fitness:
-                    if self._trigger:
-                        self._exploratory_coordinates[self._current_parameter] -= 2 * self._step_size
-                    else:
-                        self._exploratory_coordinates[self._current_parameter] -= self._step_size
-                    if (self._exploratory_coordinates[self._current_parameter] <= 0.0
-                            or self._exploratory_coordinates[self._current_parameter] > 1.0):
-                        self._exploratory_coordinates[self._current_parameter] = math.fmod(
-                            abs(self._exploratory_coordinates[self._current_parameter]), 1.0)
-                    self._exploratory_coordinates_fitness = cost
-                self._trigger = False
-                self._current_parameter += 1
-
-                if self._current_parameter == self._dimensionality:
-                    if self._exploratory_coordinates_fitness < self._pattern_coordinates_fitness:
-                        for d in range(self._dimensionality):
-                            self._pattern_coordinates[d] = 2 * self._exploratory_coordinates[d] - self._base[d]
-                            if self._pattern_coordinates[d] <= 0.0 or self._pattern_coordinates[d] > 1.0:
-                                self._pattern_coordinates[d] = math.fmod(abs(self._pattern_coordinates[d]), 1.0)
-                        self._base = tuple(self._exploratory_coordinates)
-                        self._base_fitness = self._exploratory_coordinates_fitness
-                        self._exploratory_coordinates = self._pattern_coordinates.copy()
-                        self._current_state = PatternSearch.State.PATTERN
-                    else:
-                        self._exploratory_coordinates = list(self._base)
-                        self._exploratory_coordinates_fitness = self._base_fitness
-                        self._pattern_coordinates = list(self._base)
-                        self._pattern_coordinates_fitness = self._base_fitness
-                        self._step_size *= 0.5
-                        self._current_state = PatternSearch.State.EXPLORATORY_PLUS
-                    self._current_parameter = 0
-                else:
-                    self._current_state = PatternSearch.State.EXPLORATORY_PLUS
-            case PatternSearch.State.PATTERN:
-                self._pattern_coordinates_fitness = cost
+        if self._current_state == PatternSearch.State.INITIALIZATION:
+            if cost == float('inf'):
+                self._base = tuple(1.0 - random.random() for _ in range(self._dimensionality))
+            else:
+                self._base_fitness = cost
                 self._exploratory_coordinates_fitness = cost
+                self._pattern_coordinates_fitness = cost
                 self._current_state = PatternSearch.State.EXPLORATORY_PLUS
+        elif self._current_state == PatternSearch.State.EXPLORATORY_PLUS:
+            if cost < self._exploratory_coordinates_fitness:
+                self._exploratory_coordinates[self._current_parameter] += self._step_size
+                if (self._exploratory_coordinates[self._current_parameter] <= 0.0
+                        or self._exploratory_coordinates[self._current_parameter] > 1.0):
+                    self._exploratory_coordinates[self._current_parameter] = math.fmod(
+                        abs(self._exploratory_coordinates[self._current_parameter]), 1.0)
+                self._exploratory_coordinates_fitness = cost
+                self._trigger = True
+            self._current_state = PatternSearch.State.EXPLORATORY_MINUS
+        elif self._current_state == PatternSearch.State.EXPLORATORY_MINUS:
+            if cost < self._exploratory_coordinates_fitness:
+                if self._trigger:
+                    self._exploratory_coordinates[self._current_parameter] -= 2 * self._step_size
+                else:
+                    self._exploratory_coordinates[self._current_parameter] -= self._step_size
+                if (self._exploratory_coordinates[self._current_parameter] <= 0.0
+                        or self._exploratory_coordinates[self._current_parameter] > 1.0):
+                    self._exploratory_coordinates[self._current_parameter] = math.fmod(
+                        abs(self._exploratory_coordinates[self._current_parameter]), 1.0)
+                self._exploratory_coordinates_fitness = cost
+            self._trigger = False
+            self._current_parameter += 1
+
+            if self._current_parameter == self._dimensionality:
+                if self._exploratory_coordinates_fitness < self._pattern_coordinates_fitness:
+                    for d in range(self._dimensionality):
+                        self._pattern_coordinates[d] = 2 * self._exploratory_coordinates[d] - self._base[d]
+                        if self._pattern_coordinates[d] <= 0.0 or self._pattern_coordinates[d] > 1.0:
+                            self._pattern_coordinates[d] = math.fmod(abs(self._pattern_coordinates[d]), 1.0)
+                    self._base = tuple(self._exploratory_coordinates)
+                    self._base_fitness = self._exploratory_coordinates_fitness
+                    self._exploratory_coordinates = self._pattern_coordinates.copy()
+                    self._current_state = PatternSearch.State.PATTERN
+                else:
+                    self._exploratory_coordinates = list(self._base)
+                    self._exploratory_coordinates_fitness = self._base_fitness
+                    self._pattern_coordinates = list(self._base)
+                    self._pattern_coordinates_fitness = self._base_fitness
+                    self._step_size *= 0.5
+                    self._current_state = PatternSearch.State.EXPLORATORY_PLUS
+                self._current_parameter = 0
+            else:
+                self._current_state = PatternSearch.State.EXPLORATORY_PLUS
+        elif self._current_state == PatternSearch.State.PATTERN:
+            self._pattern_coordinates_fitness = cost
+            self._exploratory_coordinates_fitness = cost
+            self._current_state = PatternSearch.State.EXPLORATORY_PLUS

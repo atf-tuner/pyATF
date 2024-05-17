@@ -93,36 +93,35 @@ class SimulatedAnnealing(SearchTechnique):
         pass
 
     def get_next_coordinates(self) -> Set[Coordinates]:
-        match self._current_state:
-            case SimulatedAnnealing.State.INITIALIZATION:
-                self._current_parameter = 0
-                self._temp = self._schedule[min(self._time, self._max_time)]
-                self._step_size = get_step_size(self._time, self._temp)
-                self._current_coordinates = tuple(1.0 - random.random() for _ in range(self._dimensionality))
-                self._neighbors[self._current_coordinates] = 0.0
-                return {clamp_coordinates_capped(self._current_coordinates)}
-            case SimulatedAnnealing.State.EXPLORE_PLUS:
-                if self._current_coordinates[self._current_parameter] < 1.0:
-                    new_coordinates = list(self._current_coordinates)
-                    new_coordinates[self._current_parameter] += self._step_size * random.random()
-                    new_coordinates = tuple(new_coordinates)
-                    self._neighbors[new_coordinates] = 0.0
-                    if self._current_coordinates[self._current_parameter] <= 0.0:
-                        self._current_state = SimulatedAnnealing.State.EXPLORE_MINUS
-                    return {clamp_coordinates_capped(new_coordinates)}
-                else:
+        if self._current_state == SimulatedAnnealing.State.INITIALIZATION:
+            self._current_parameter = 0
+            self._temp = self._schedule[min(self._time, self._max_time)]
+            self._step_size = get_step_size(self._time, self._temp)
+            self._current_coordinates = tuple(1.0 - random.random() for _ in range(self._dimensionality))
+            self._neighbors[self._current_coordinates] = 0.0
+            return {clamp_coordinates_capped(self._current_coordinates)}
+        elif self._current_state == SimulatedAnnealing.State.EXPLORE_PLUS:
+            if self._current_coordinates[self._current_parameter] < 1.0:
+                new_coordinates = list(self._current_coordinates)
+                new_coordinates[self._current_parameter] += self._step_size * random.random()
+                new_coordinates = tuple(new_coordinates)
+                self._neighbors[new_coordinates] = 0.0
+                if self._current_coordinates[self._current_parameter] <= 0.0:
                     self._current_state = SimulatedAnnealing.State.EXPLORE_MINUS
-                    new_coordinates = list(self._current_coordinates)
-                    new_coordinates[self._current_parameter] -= self._step_size * random.random()
-                    new_coordinates = tuple(new_coordinates)
-                    self._neighbors[new_coordinates] = 0.0
-                    return {clamp_coordinates_capped(new_coordinates)}
-            case SimulatedAnnealing.State.EXPLORE_MINUS:
+                return {clamp_coordinates_capped(new_coordinates)}
+            else:
+                self._current_state = SimulatedAnnealing.State.EXPLORE_MINUS
                 new_coordinates = list(self._current_coordinates)
                 new_coordinates[self._current_parameter] -= self._step_size * random.random()
                 new_coordinates = tuple(new_coordinates)
                 self._neighbors[new_coordinates] = 0.0
                 return {clamp_coordinates_capped(new_coordinates)}
+        elif self._current_state == SimulatedAnnealing.State.EXPLORE_MINUS:
+            new_coordinates = list(self._current_coordinates)
+            new_coordinates[self._current_parameter] -= self._step_size * random.random()
+            new_coordinates = tuple(new_coordinates)
+            self._neighbors[new_coordinates] = 0.0
+            return {clamp_coordinates_capped(new_coordinates)}
 
     def report_costs(self, costs: Dict[Coordinates, Cost]):
         if len(costs) != 1:
@@ -130,47 +129,46 @@ class SimulatedAnnealing(SearchTechnique):
         coordinates, cost = next(iter(costs.items()))
         if cost is None:
             cost = float('inf')
-        match self._current_state:
-            case SimulatedAnnealing.State.INITIALIZATION:
-                self._neighbors[coordinates] = cost
+        if self._current_state == SimulatedAnnealing.State.INITIALIZATION:
+            self._neighbors[coordinates] = cost
+            self._best_coordinates = coordinates
+            self._best_result = cost
+            self._current_state = SimulatedAnnealing.State.EXPLORE_PLUS
+        elif self._current_state == SimulatedAnnealing.State.EXPLORE_PLUS:
+            self._neighbors[coordinates] = cost
+            if cost < self._best_result:
                 self._best_coordinates = coordinates
                 self._best_result = cost
+            self._current_state = SimulatedAnnealing.State.EXPLORE_MINUS
+        elif self._current_state == SimulatedAnnealing.State.EXPLORE_MINUS:
+            self._neighbors[coordinates] = cost
+            if cost < self._best_result:
+                self._best_coordinates = coordinates
+                self._best_result = cost
+            self._current_parameter += 1
+            if self._current_parameter == self._dimensionality:
+                self._current_parameter = 0
+                current_result = None
+                while True:
+                    if not self._neighbors:
+                        self._current_coordinates = self._best_coordinates
+                        current_result = self._best_result
+                        break
+                    candidate_coordinates, candidate_cost = random.choice(list(self._neighbors.items()))
+                    if random.random() < AcceptanceFunction(1.0,
+                                                            relative(candidate_cost, self._best_result),
+                                                            self._temp):
+                        self._current_coordinates = candidate_coordinates
+                        current_result = candidate_cost
+                        break
+                    del self._neighbors[candidate_coordinates]
+                self._time += 1
+                if self._time > self._max_time:
+                    self._time -= self._max_time
+                self._temp = self._schedule[min(self._time, self._max_time)]
+                self._step_size = get_step_size(self._time, self._temp)
+                self._neighbors.clear()
+                self._neighbors[self._current_coordinates] = current_result
                 self._current_state = SimulatedAnnealing.State.EXPLORE_PLUS
-            case SimulatedAnnealing.State.EXPLORE_PLUS:
-                self._neighbors[coordinates] = cost
-                if cost < self._best_result:
-                    self._best_coordinates = coordinates
-                    self._best_result = cost
-                self._current_state = SimulatedAnnealing.State.EXPLORE_MINUS
-            case SimulatedAnnealing.State.EXPLORE_MINUS:
-                self._neighbors[coordinates] = cost
-                if cost < self._best_result:
-                    self._best_coordinates = coordinates
-                    self._best_result = cost
-                self._current_parameter += 1
-                if self._current_parameter == self._dimensionality:
-                    self._current_parameter = 0
-                    current_result = None
-                    while True:
-                        if not self._neighbors:
-                            self._current_coordinates = self._best_coordinates
-                            current_result = self._best_result
-                            break
-                        candidate_coordinates, candidate_cost = random.choice(list(self._neighbors.items()))
-                        if random.random() < AcceptanceFunction(1.0,
-                                                                relative(candidate_cost, self._best_result),
-                                                                self._temp):
-                            self._current_coordinates = candidate_coordinates
-                            current_result = candidate_cost
-                            break
-                        del self._neighbors[candidate_coordinates]
-                    self._time += 1
-                    if self._time > self._max_time:
-                        self._time -= self._max_time
-                    self._temp = self._schedule[min(self._time, self._max_time)]
-                    self._step_size = get_step_size(self._time, self._temp)
-                    self._neighbors.clear()
-                    self._neighbors[self._current_coordinates] = current_result
-                    self._current_state = SimulatedAnnealing.State.EXPLORE_PLUS
-                else:
-                    self._current_state = SimulatedAnnealing.State.EXPLORE_PLUS
+            else:
+                self._current_state = SimulatedAnnealing.State.EXPLORE_PLUS
