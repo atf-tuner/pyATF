@@ -1,4 +1,5 @@
 import inspect
+import textwrap
 from typing import Callable, Optional
 
 from pyatf.range import Range
@@ -9,6 +10,12 @@ class TP:
         self._name = name
         self._values = values
         self._constraint = constraint
+        self.constraint_source = None
+        if self._constraint is not None:
+            try:
+                self.constraint_source = textwrap.dedent(inspect.getsource(self._constraint))
+            except OSError:
+                self.constraint_source = 'source unknown'
 
     def __repr__(self):
         return self._name
@@ -30,6 +37,6 @@ class TP:
             'name': self._name,
             'range': self._values.to_json()
         }
-        if self._constraint is not None:
-            json['constraint'] = inspect.getsource(self._constraint)
+        if self.constraint_source is not None:
+            json['constraint'] = self.constraint_source
         return json
