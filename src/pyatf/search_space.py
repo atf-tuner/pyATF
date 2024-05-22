@@ -148,7 +148,7 @@ class SearchSpace:
             for tp in tp_group:
                 self._cot_layer_to_tp_name.append(tp.name)
                 self._unconstrained_size *= len(tp.values)
-        self._partial_leaf_configs: List[List[Tuple[any, ...]]] = []
+        self._partial_leaf_configs: List[List[Tuple[any, ...]]] = []  # stores config values along the path of each leaf
         self._num_leafs: List[int] = []
         total_iterations = 0
         tp_to_range_size: List[List[int]] = []
@@ -470,6 +470,9 @@ class SearchSpace:
                     for leaf_value in partial_leaf_configs[leaf_index]:
                         config[self._cot_layer_to_tp_name[layer]] = leaf_value
                         layer += 1
+                    # go to next tree
+                    if layer < self._num_tps:
+                        node = next(trees).root
 
             return config
         else:

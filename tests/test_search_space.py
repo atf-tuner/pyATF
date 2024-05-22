@@ -173,6 +173,7 @@ class TestSearchSpace(unittest.TestCase):
                          search_space.get_configuration((0.45455, 0.65410, 0.50001, 1.00000, 0.47369, 0.68753)))
 
     def test_1d_access(self):
+        tp7 = TP('tp7', Interval(1, 2))
         search_space = SearchSpace(
             TP('tp1', Interval(1, 10)),
             TP('tp2', Interval(5, 10), lambda tp2, tp1: tp2 % tp1 == 0),
@@ -181,6 +182,8 @@ class TestSearchSpace(unittest.TestCase):
             TP('tp4', Set(min, max)),
             TP('tp5', Interval(1, 10)),
             TP('tp6', Interval(1, 10), lambda tp6, tp4, tp5: tp4(tp5, tp6) == 10),
+
+            tp7,
 
             enable_1d_access=True
         )
@@ -207,16 +210,27 @@ class TestSearchSpace(unittest.TestCase):
                         9: ({10: (None, 1)}, 1),
                         10: ({1: (None, 1), 2: (None, 1), 3: (None, 1), 4: (None, 1), 5: (None, 1),
                               6: (None, 1), 7: (None, 1), 8: (None, 1), 9: (None, 1), 10: (None, 1)}, 10)}, 19)
-             }, 20)
+             }, 20),
+            ({tp7.values: (None, 1)}, 2)
         ])
-        self.assertEqual(220, len(search_space))
-        self.assertEqual({'tp1': 2, 'tp2': 6, 'tp3': 2, 'tp4': min, 'tp5': 10, 'tp6': 10},
+        self.assertEqual(440, len(search_space))
+        self.assertEqual({'tp1': 2, 'tp2': 6, 'tp3': 2, 'tp4': min, 'tp5': 10, 'tp6': 10, 'tp7': 1},
                          search_space.get_configuration(0))
-        self.assertEqual({'tp1': 2, 'tp2': 6, 'tp3': 2, 'tp4': max, 'tp5': 1, 'tp6': 10},
+        self.assertEqual({'tp1': 2, 'tp2': 6, 'tp3': 2, 'tp4': min, 'tp5': 10, 'tp6': 10, 'tp7': 2},
                          search_space.get_configuration(1))
-        self.assertEqual({'tp1': 2, 'tp2': 6, 'tp3': 2, 'tp4': max, 'tp5': 2, 'tp6': 10},
+        self.assertEqual({'tp1': 2, 'tp2': 6, 'tp3': 2, 'tp4': max, 'tp5': 1, 'tp6': 10, 'tp7': 1},
                          search_space.get_configuration(2))
-        self.assertEqual({'tp1': 2, 'tp2': 8, 'tp3': 2, 'tp4': min, 'tp5': 10, 'tp6': 10},
-                         search_space.get_configuration(20))
-        self.assertEqual({'tp1': 2, 'tp2': 8, 'tp3': 2, 'tp4': max, 'tp5': 1, 'tp6': 10},
-                         search_space.get_configuration(21))
+        self.assertEqual({'tp1': 2, 'tp2': 6, 'tp3': 2, 'tp4': max, 'tp5': 1, 'tp6': 10, 'tp7': 2},
+                         search_space.get_configuration(3))
+        self.assertEqual({'tp1': 2, 'tp2': 6, 'tp3': 2, 'tp4': max, 'tp5': 2, 'tp6': 10, 'tp7': 1},
+                         search_space.get_configuration(4))
+        self.assertEqual({'tp1': 2, 'tp2': 6, 'tp3': 2, 'tp4': max, 'tp5': 2, 'tp6': 10, 'tp7': 2},
+                         search_space.get_configuration(5))
+        self.assertEqual({'tp1': 2, 'tp2': 8, 'tp3': 2, 'tp4': min, 'tp5': 10, 'tp6': 10, 'tp7': 1},
+                         search_space.get_configuration(40))
+        self.assertEqual({'tp1': 2, 'tp2': 8, 'tp3': 2, 'tp4': min, 'tp5': 10, 'tp6': 10, 'tp7': 2},
+                         search_space.get_configuration(41))
+        self.assertEqual({'tp1': 2, 'tp2': 8, 'tp3': 2, 'tp4': max, 'tp5': 1, 'tp6': 10, 'tp7': 1},
+                         search_space.get_configuration(42))
+        self.assertEqual({'tp1': 2, 'tp2': 8, 'tp3': 2, 'tp4': max, 'tp5': 1, 'tp6': 10, 'tp7': 2},
+                         search_space.get_configuration(43))
