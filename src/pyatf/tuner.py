@@ -79,6 +79,8 @@ class Tuner:
                                              silent=silent)
             search_space_generation_end = time.perf_counter_ns()
             self._search_space_generation_ns = search_space_generation_end - search_space_generation_start
+            if not silent:
+                print(f'search space size: {self._search_space.constrained_size}')
 
             # prepare abort condition
             self._abort_condition: Optional[AbortCondition] = abort_condition

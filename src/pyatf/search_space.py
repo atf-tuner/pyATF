@@ -231,7 +231,7 @@ class SearchSpace:
                     self._cot.append(tree)
                     self._constrained_size *= num_leafs
                     self._num_leafs.append(num_leafs)
-                print('\n')
+                print('')
             else:
                 # enable 1D access, no progress prints
                 for tp_group_idx, tp_group in enumerate(independent_tp_groups):
@@ -360,7 +360,7 @@ class SearchSpace:
                     progress_printer(finished_iterations / total_iterations)
                     self._cot.append(tree)
                     self._constrained_size *= num_leafs
-                print('\n')
+                print('')
             else:
                 # no 1D access, no progress prints
                 for tp_group_idx, tp_group in enumerate(independent_tp_groups):
