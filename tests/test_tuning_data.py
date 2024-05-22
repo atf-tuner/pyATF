@@ -56,9 +56,9 @@ class TestTuningData(unittest.TestCase):
         self.assertEqual([
             {'name': 'tp1', 'range': {'kind': 'Interval', 'start': 1, 'end': 10, 'step': 1}},
             {'name': 'tp2', 'range': {'kind': 'Interval', 'start': 5, 'end': 10, 'step': 1},
-             'constraint': '        tp2 = TP(\'tp2\', Interval(5, 10), lambda tp2, tp1: tp2 % tp1 == 0)\n'},
+             'constraint': 'tp2 = TP(\'tp2\', Interval(5, 10), lambda tp2, tp1: tp2 % tp1 == 0)\n'},
             {'name': 'tp3', 'range': {'kind': 'Interval', 'start': 2, 'end': 3, 'step': 1},
-             'constraint': '        tp3 = TP(\'tp3\', Interval(2, 3), lambda tp3, tp1: tp1 % tp3 == 0)\n'}
+             'constraint': 'tp3 = TP(\'tp3\', Interval(2, 3), lambda tp3, tp1: tp1 % tp3 == 0)\n'}
         ], tuning_data.tuning_parameters)
         self.assertEqual(11, tuning_data.constrained_search_space_size)
         self.assertEqual(120, tuning_data.unconstrained_search_space_size)
