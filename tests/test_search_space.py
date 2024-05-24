@@ -78,7 +78,7 @@ class TestSearchSpace(unittest.TestCase):
                          [(data, children, num_leafs)
                           for data, (children, num_leafs) in gold_tree.items()])
 
-    def test_single_tp(self):
+    def test_single_tp_interval(self):
         tp1 = TP('tp1', Interval(1, 10))
         search_space = SearchSpace(tp1)
         self._check_cot(search_space.cot, [({tp1.values: (None, 1)}, 10)])
@@ -90,9 +90,18 @@ class TestSearchSpace(unittest.TestCase):
         self.assertEqual({'tp1': 8}, search_space.get_configuration((0.80000,)))
         self.assertEqual({'tp1': 10}, search_space.get_configuration((1.00000,)))
 
+    def test_single_tp_set(self):
+        tp1 = TP('tp1', Set(1, 2, 3))
+        search_space = SearchSpace(tp1)
+        self._check_cot(search_space.cot, [({tp1.values: (None, 1)}, 3)])
+        self.assertEqual(3, len(search_space))
+        self.assertEqual({'tp1': 1}, search_space.get_configuration((0.00001,)))
+        self.assertEqual({'tp1': 2}, search_space.get_configuration((0.50000,)))
+        self.assertEqual({'tp1': 3}, search_space.get_configuration((1.00000,)))
+
     def test_independent_tps(self):
         tp1 = TP('tp1', Interval(1, 10))
-        tp2 = TP('tp2', Interval(5, 10))
+        tp2 = TP('tp2', Set(5, 6, 7, 8, 9, 10))
         search_space = SearchSpace(tp1, tp2)
         self._check_cot(search_space.cot, [({tp1.values: (None, 1)}, 10), ({tp2.values: (None, 1)}, 6)])
         self.assertEqual(60, len(search_space))
@@ -103,7 +112,7 @@ class TestSearchSpace(unittest.TestCase):
     def test_dependent_tps(self):
         search_space = SearchSpace(
             TP('tp1', Interval(1, 10)),
-            TP('tp2', Interval(5, 10), lambda tp2, tp1: tp2 % tp1 == 0),
+            TP('tp2', Set(5, 6, 7, 8, 9, 10), lambda tp2, tp1: tp2 % tp1 == 0),
             TP('tp3', Interval(2, 3), lambda tp3, tp1: tp1 % tp3 == 0)
         )
         self._check_cot(search_space.cot, [
@@ -126,7 +135,7 @@ class TestSearchSpace(unittest.TestCase):
     def test_multiple_dependent_tp_groups(self):
         search_space = SearchSpace(
             TP('tp1', Interval(1, 10)),
-            TP('tp2', Interval(5, 10), lambda tp2, tp1: tp2 % tp1 == 0),
+            TP('tp2', Set(5, 6, 7, 8, 9, 10), lambda tp2, tp1: tp2 % tp1 == 0),
             TP('tp3', Interval(2, 3), lambda tp3, tp1: tp1 % tp3 == 0),
 
             TP('tp4', Set(min, max)),
@@ -172,11 +181,11 @@ class TestSearchSpace(unittest.TestCase):
         self.assertEqual({'tp1': 4, 'tp2': 8, 'tp3': 2, 'tp4': max, 'tp5': 10, 'tp6': 7},
                          search_space.get_configuration((0.45455, 0.65410, 0.50001, 1.00000, 0.47369, 0.68753)))
 
-    def test_1d_access(self):
+    def test_1d_access_interval(self):
         tp7 = TP('tp7', Interval(1, 2))
         search_space = SearchSpace(
             TP('tp1', Interval(1, 10)),
-            TP('tp2', Interval(5, 10), lambda tp2, tp1: tp2 % tp1 == 0),
+            TP('tp2', Set(5, 6, 7, 8, 9, 10), lambda tp2, tp1: tp2 % tp1 == 0),
             TP('tp3', Interval(2, 3), lambda tp3, tp1: tp1 % tp3 == 0),
 
             TP('tp4', Set(min, max)),
