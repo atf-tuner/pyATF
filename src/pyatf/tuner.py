@@ -174,7 +174,10 @@ class Tuner:
                 json.dump(self._tuning_data.to_json(), self._log_file, indent=4)
 
             # initialize search technique
-            self._search_technique.initialize(self._search_space.num_tps)
+            if isinstance(self._search_technique, SearchTechnique1D):
+                self._search_technique.initialize(len(self._search_space))
+            else:
+                self._search_technique.initialize(self._search_space.num_tps)
 
         def make_step(self):
             # get new coordinates
