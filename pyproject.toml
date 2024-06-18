@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "pyatf"
-version = "0.0.6"
+version = "0.0.7"
 authors = [
     { name="Richard Schulze", email="r.schulze@uni-muenster.de" },
     { name="Ari Rasch", email="a.rasch@uni-muenster.de" }
