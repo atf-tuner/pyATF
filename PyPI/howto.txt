@@ -1,3 +1,4 @@
-1. Set version number in pyproject.toml
-2. Run publish.sh from repository root
-3. Enter pyATF API Token
+1. Make sure there are no uncommitted changes
+2. Set version number in pyproject.toml
+3. Run publish.sh from repository root
+4. Enter pyATF API Token
