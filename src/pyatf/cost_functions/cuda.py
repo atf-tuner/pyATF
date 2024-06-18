@@ -10,7 +10,9 @@ from cuda import cuda, nvrtc
 from pyatf.result_check import equality
 from pyatf.tuning_data import Configuration, Cost, CostFunctionError
 
-cuda.cuInit(0)
+cuda_init_err, = cuda.cuInit(0)
+if cuda_init_err != cuda.CUresult.CUDA_SUCCESS:
+    raise ValueError(f'CUDA failed with error: {cuda_init_err}')
 
 
 def source(source: str):

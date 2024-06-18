@@ -118,6 +118,13 @@ class Tuner:
         def tuning_data(self):
             return self._tuning_data
 
+        def flush_log(self):
+            if self._log_file:
+                self._log_file.seek(0)
+                json.dump(self._tuning_data.to_json(), self._log_file, indent=4)
+                self._log_file.truncate()
+                self._last_log_dump = time.perf_counter_ns()
+
         def _print_progress(self, timestamp: datetime, cost: Optional[Cost] = None):
             now = time.perf_counter_ns()
             elapsed_ns = now - self._tuning_start_ns
@@ -170,8 +177,7 @@ class Tuner:
                                            self._abort_condition.to_json())
 
             # write tuning data
-            if self._log_file:
-                json.dump(self._tuning_data.to_json(), self._log_file, indent=4)
+            self.flush_log()
 
             # initialize search technique
             if isinstance(self._search_technique, SearchTechnique1D):
@@ -202,6 +208,12 @@ class Tuner:
                     self._last_line_length = 0
                 cost = None
                 valid = False
+            except BaseException as e:
+                self._tuning_data.record_evaluation(config, False, None, **{
+                    self._coordinates_or_index_param_name: coords_or_index
+                })
+                self.flush_log()
+                raise e
             timestamp = self._tuning_data.record_evaluation(config, valid, cost, **{
                 self._coordinates_or_index_param_name: coords_or_index
             })
@@ -211,8 +223,7 @@ class Tuner:
             if not self._silent:
                 self._print_progress(timestamp, cost)
             if self._log_file and (self._last_log_dump is None or time.perf_counter_ns() - self._last_log_dump > 3e11):
-                json.dump(self._tuning_data.to_json(), self._log_file, indent=4)
-                self._last_log_dump = time.perf_counter_ns()
+                self.flush_log()
 
         def finalize(self, sigint_received: bool = False):
             self._search_technique.finalize()
@@ -220,9 +231,7 @@ class Tuner:
 
             # write tuning data to file
             if self._log_file:
-                self._log_file.seek(0)
-                json.dump(self._tuning_data.to_json(), self._log_file, indent=4)
-                self._log_file.truncate()
+                self.flush_log()
                 self._log_file.close()
                 self._log_file = None
 
@@ -286,6 +295,11 @@ class Tuner:
         if self._tuning_run is None:
             raise ValueError('cannot get tuning data, because no tuning run is in progress')
         return self._tuning_run.tuning_data
+
+    def flush_log(self):
+        if self._tuning_run is None:
+            raise ValueError('cannot flush log, because no tuning run is in progress')
+        self._tuning_run.flush_log()
 
     def tune(self, cost_function: CostFunction, abort_condition: Optional[AbortCondition] = None):
         if self._tuning_run is not None:
