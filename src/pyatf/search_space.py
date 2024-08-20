@@ -119,8 +119,7 @@ class SearchSpace:
             nonlocal last_progress_print_ns
             now = time.perf_counter_ns()
             if last_progress_print_ns is None or now - last_progress_print_ns >= 1000000000:
-                if last_progress_print_ns is None:
-                    last_progress_print_ns = now
+                last_progress_print_ns = now
                 elapsed_ns = now - generation_start_ns
                 elapsed_seconds = elapsed_ns // 1000000000
                 elapsed_time_str = (f'{elapsed_seconds // 3600}'
