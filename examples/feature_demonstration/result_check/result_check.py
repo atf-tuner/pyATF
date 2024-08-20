@@ -43,9 +43,9 @@ sum_kernel = opencl.Kernel( opencl.source(sum_kernel_as_string), 'sum' )  # kern
 
 cf_sum = opencl.CostFunction( sum_kernel ).platform_id( 0 )                                                           \
                                           .device_id( 0 )                                                             \
-                                          .inputs( np.int32( N ) ,
-                                                   x             ,
-                                                   y             )                                                    \
+                                          .kernel_args( np.int32( N ) ,
+                                                        x             ,
+                                                        y             )                                               \
                                           .global_size( lambda WPT, LS: N/WPT )                                       \
                                           .local_size( lambda LS: LS )                                                \
                                           .check_result( 2, y_gold,

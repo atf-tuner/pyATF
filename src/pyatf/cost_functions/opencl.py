@@ -68,13 +68,13 @@ class Kernel:
         return self._flags
 
 
-Input = Union[numpy.ndarray, numpy.generic]
+KernelArg = Union[numpy.ndarray, numpy.generic]
 
 _LOG_FILE_COLUMNS = ('build_time_ns',
                      'opencl_error_code',
                      'opencl_error_routine',
                      'result_check',
-                     'checked_inputs')
+                     'checked_kernel_args')
 
 
 class CostFunction:
@@ -85,7 +85,7 @@ class CostFunction:
         self._platform_id: Optional[int] = None
         self._device_id: Optional[int] = None
 
-        self._inputs: Dict[int, Input] = {}
+        self._kernel_args: Dict[int, KernelArg] = {}
 
         self._global_size_x: Union[int, Callable[..., int]] = 1
         self._global_size_x_tps: Optional[Set[str, ...]] = None
@@ -100,8 +100,8 @@ class CostFunction:
         self._local_size_z: Union[int, Callable[..., int]] = 1
         self._local_size_z_tps: Optional[Set[str, ...]] = None
 
-        self._gold_data: Dict[int, Tuple[Input, Callable[[numpy.generic, numpy.generic], bool]]] = {}
-        self._gold_cmp_buffer: Dict[int, Input] = {}
+        self._gold_data: Dict[int, Tuple[KernelArg, Callable[[numpy.generic, numpy.generic], bool]]] = {}
+        self._gold_cmp_buffer: Dict[int, KernelArg] = {}
         self._abort_on_invalid_results: bool = False
 
         self._abort_on_opencl_error: bool = False
@@ -146,9 +146,9 @@ class CostFunction:
         self._alloc_buffers()
         return self
 
-    def inputs(self, *inputs: Input):
+    def kernel_args(self, *kernel_args: KernelArg):
         self._free_buffers()
-        self._inputs = {idx: inp for idx, inp in enumerate(inputs)}
+        self._kernel_args = {idx: inp for idx, inp in enumerate(kernel_args)}
         self._alloc_buffers()
         return self
 
@@ -194,13 +194,13 @@ class CostFunction:
             self._local_size_z_tps = set(inspect.signature(z).parameters.keys())
         return self
 
-    def check_result(self, index: int, gold_data_or_callable: Union[Input, Callable[..., Input]],
+    def check_result(self, index: int, gold_data_or_callable: Union[KernelArg, Callable[..., KernelArg]],
                      comparator: Callable[[numpy.generic, numpy.generic], bool] = equality):
         if isinstance(gold_data_or_callable, (numpy.ndarray, numpy.generic)):
             self._gold_data[index] = (gold_data_or_callable, comparator)
             self._gold_cmp_buffer[index] = gold_data_or_callable.copy()
         else:
-            gold_buffer = gold_data_or_callable(*self._inputs.values())
+            gold_buffer = gold_data_or_callable(*self._kernel_args.values())
             self._gold_data[index] = (gold_buffer, comparator)
             self._gold_cmp_buffer[index] = gold_buffer.copy()
         return self
@@ -291,7 +291,7 @@ class CostFunction:
                 }))
 
             # set kernel arguments
-            for idx, inp in self._inputs.items():
+            for idx, inp in self._kernel_args.items():
                 if isinstance(inp, numpy.ndarray):
                     kernel.set_arg(idx, self._cl_buffer[idx])
                 else:
@@ -313,19 +313,19 @@ class CostFunction:
                 # result check
                 if e == 0 and self._gold_data:
                     self._cpy_to_host(self._gold_cmp_buffer)
-                    meta_data['checked_inputs'] = []
+                    meta_data['checked_kernel_args'] = []
                     for idx, (gold_values, comparator) in self._gold_data.items():
-                        meta_data['checked_inputs'].append(idx)
+                        meta_data['checked_kernel_args'].append(idx)
                         result_values = self._gold_cmp_buffer[idx]
                         if result_values.size != gold_values.size:
-                            meta_data['result_check'] = f'FAILED for input {idx}: result size is not equal to gold size'
+                            meta_data['result_check'] = f'FAILED for kernel argument {idx}: result size is not equal to gold size'
                             if self._abort_on_invalid_results:
                                 raise RuntimeError('invalid results')
                             else:
                                 raise CostFunctionError('invalid results')
                         for value_idx, (result_value, gold_value) in enumerate(zip(result_values, gold_values)):
                             if not comparator(result_value, gold_value):
-                                meta_data['result_check'] = (f'FAILED for input {idx} at position {value_idx}: '
+                                meta_data['result_check'] = (f'FAILED for kernel argument {idx} at position {value_idx}: '
                                                              f'expected {gold_value}, got {result_value}')
                                 if self._abort_on_invalid_results:
                                     raise RuntimeError('invalid results')
@@ -378,20 +378,20 @@ class CostFunction:
         if self._cl_context is not None:
             self._cl_buffer = {
                 idx: cl.Buffer(self._cl_context, cl.mem_flags.READ_WRITE, inp.nbytes)
-                for idx, inp in self._inputs.items() if isinstance(inp, numpy.ndarray)
+                for idx, inp in self._kernel_args.items() if isinstance(inp, numpy.ndarray)
             }
 
     def _cpy_to_device(self):
         if self._cl_queue is not None:
             for idx, buffer in self._cl_buffer.items():
-                ndarray = self._inputs[idx]
+                ndarray = self._kernel_args[idx]
                 cl.enqueue_copy(self._cl_queue, buffer, ndarray)
             self._cl_queue.finish()
 
     def _cpy_to_host(self, host_memory: Dict[int, numpy.ndarray] = None):
         if self._cl_queue is not None:
             if host_memory is None:
-                host_memory = self._inputs
+                host_memory = self._kernel_args
             for idx, ndarray in host_memory.items():
                 if isinstance(ndarray, numpy.ndarray):
                     cl.enqueue_copy(self._cl_queue, ndarray, self._cl_buffer[idx])

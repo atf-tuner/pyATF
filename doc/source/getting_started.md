@@ -37,7 +37,7 @@ __kernel void saxpy( const int N, const float a, const __global float* x, __glob
 }
 ```
 
-It takes as inputs: the input size `N`, a floating point number `a`, and two `N`-sized vectors `x` and `y` of floating point numbers. 
+It takes as arguments: the input size `N`, a floating point number `a`, and two `N`-sized vectors `x` and `y` of floating point numbers. 
 The kernel computes for all {math}`i\in[1,\texttt{N}]_\mathbb{N}`:
 
     y[ i ] = a * x[ i ] + y[ i ] 
@@ -87,14 +87,14 @@ For our `saxpy` example, we use pyATF's pre-implemented OpenCL cost function `op
 ```python
 saxpy_kernel = opencl.Kernel( opencl.source(saxpy_kernel_as_string), 'saxpy' )  # kernel's code & name
 
-cf_saxpy = opencl.CostFunction( saxpy_kernel ).platform_id( 0 )                                \ # OpenCL platform id
-                                              .device_id( 0 )                                  \ # OpenCL device id
-                                              .inputs( np.int32( N )                        ,    # N
-                                                       np.float32(np.random.random())       ,    # a
-                                                       np.random.rand(N).astype(np.float32) ,    # x
-                                                       np.random.rand(N).astype(np.float32) )  \ # y
-                                              .global_size( lambda WPT, LS: N/WPT )            \ # OpenCL global size                                   
-                                              .local_size( lambda LS: LS )                       # OpenCL local size                                   
+cf_saxpy = opencl.CostFunction( saxpy_kernel ).platform_id( 0 )                                     \ # OpenCL platform id
+                                              .device_id( 0 )                                       \ # OpenCL device id
+                                              .kernel_args( np.int32( N )                        ,    # N
+                                                            np.float32(np.random.random())       ,    # a
+                                                            np.random.rand(N).astype(np.float32) ,    # x
+                                                            np.random.rand(N).astype(np.float32) )  \ # y
+                                              .global_size( lambda WPT, LS: N/WPT )                 \ # OpenCL global size                                   
+                                              .local_size( lambda LS: LS )                            # OpenCL local size                                   
 
 ```
 
@@ -102,7 +102,7 @@ cf_saxpy = opencl.CostFunction( saxpy_kernel ).platform_id( 0 )                 
 We first define the kernel straightforwardly as an pyATF OpenCL kernel object `opencl.Kernel`.
 Afterwards, we construct an pyATF OpenCL cost function object of type `opencl.CostFunction`, which we customize with:
 1) target device's OpenCL platform and device id
-2) the kernel's inputs, which are in this example: the input size `N`, a random floating point number for `a` (random data is the default input in auto-tuning), and two `N`-sized buffers for `x` and `y` that are also filled with random floating point numbers;
+2) the kernel's arguments, which are in this example: the input size `N`, a random floating point number for `a` (random data is the default input in auto-tuning), and two `N`-sized buffers for `x` and `y` that are also filled with random floating point numbers;
 3) the OpenCL global and local size, which we chose as: `N/WPT` (global size) and `LS` (local size) -- pyATF allows defining both sizes as Python lambdas that may contain tuning parameters in their definition for high experessivity.
 
 Correctness can be optionally validated in pyATF via function `check_result( gold_value )` which checks the `i`-th buffer against a NumPy array `gold_value`.

@@ -27,12 +27,12 @@ LS  = TP('LS',  Interval( 1, N ), lambda WPT, LS: (N / WPT) % LS == 0)
 # Step 2: Implement a Cost Function
 saxpy_kernel = cuda.Kernel( cuda.source(saxpy_kernel_as_string), 'saxpy' )  # kernel's code & name
 
-cf_saxpy = cuda.CostFunction( saxpy_kernel ).device_id( 0 )                                  \
-                                            .inputs( np.int32( N )                        ,
-                                                     np.float32(np.random.random())       ,
-                                                     np.random.rand(N).astype(np.float32) ,
-                                                     np.random.rand(N).astype(np.float32) )  \
-                                            .grid_dim( lambda WPT, LS: N/WPT/LS )            \
+cf_saxpy = cuda.CostFunction( saxpy_kernel ).device_id( 0 )                                       \
+                                            .kernel_args( np.int32( N )                        ,
+                                                          np.float32(np.random.random())       ,
+                                                          np.random.rand(N).astype(np.float32) ,
+                                                          np.random.rand(N).astype(np.float32) )  \
+                                            .grid_dim( lambda WPT, LS: N/WPT/LS )                 \
                                             .block_dim( lambda LS: LS )
 
 # Step 3: Explore the Search Space

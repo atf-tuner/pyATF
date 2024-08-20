@@ -27,13 +27,13 @@ LS  = TP('LS',  Interval( 1, N ), lambda WPT, LS: (N / WPT) % LS == 0)
 # Step 2: Implement a Cost Function
 saxpy_kernel = opencl.Kernel( opencl.source(saxpy_kernel_as_string), 'saxpy' )  # kernel's code & name
 
-cf_saxpy = opencl.CostFunction( saxpy_kernel ).platform_id( 0 )                                \
-                                              .device_id( 0 )                                  \
-                                              .inputs( np.int32( N )                        ,
-                                                       np.float32(np.random.random())       ,
-                                                       np.random.rand(N).astype(np.float32) ,
-                                                       np.random.rand(N).astype(np.float32) )  \
-                                              .global_size( lambda WPT, LS: N/WPT )            \
+cf_saxpy = opencl.CostFunction( saxpy_kernel ).platform_id( 0 )                                     \
+                                              .device_id( 0 )                                       \
+                                              .kernel_args( np.int32( N )                        ,
+                                                            np.float32(np.random.random())       ,
+                                                            np.random.rand(N).astype(np.float32) ,
+                                                            np.random.rand(N).astype(np.float32) )  \
+                                              .global_size( lambda WPT, LS: N/WPT )                 \
                                               .local_size( lambda LS: LS )
 
 # Step 3: Explore the Search Space
