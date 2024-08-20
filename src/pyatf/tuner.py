@@ -50,17 +50,32 @@ signal.signal(signal.SIGINT, sigint_handler)
 class Tuner:
     class TuningRun:
         def __init__(self,
-                     tps: Tuple[TP, ...],
+                     search_space: SearchSpace | Tuple[TP, ...],
                      cost_function: CostFunction,
                      search_technique: Optional[Union[SearchTechnique, SearchTechnique1D]],
                      silent: Optional[bool],
                      log_file: Optional[str],
                      abort_condition: Optional[AbortCondition]):
-            if tps is None:
+            if search_space is None:
                 raise ValueError('missing call to `Tuner.tuning_parameters(...)`: no tuning parameters defined')
 
+            # tuning data
+            self._search_space: SearchSpace
+            self._search_technique: SearchTechnique | SearchTechnique1D
+            self._abort_condition: AbortCondition  # TODO: does not work (add initialization)
+            self._tps: Tuple[TP, ...]
+            self._tuning_data: Optional[TuningData] = None
+            self._cost_function: CostFunction = cost_function
+
+            # progress data
+            self._silent = silent
+            self._log_file: Optional[TextIO] = None
+            self._last_log_dump: Optional[int] = None
+            self._last_line_length: Optional[int] = None
+            self._tuning_start_ns: Optional[int] = None
+
             # prepare search technique
-            self._search_technique: SearchTechnique = search_technique
+            self._search_technique: SearchTechnique | SearchTechnique1D = search_technique
             if self._search_technique is None:
                 self._search_technique = AUCBandit()
             if isinstance(self._search_technique, SearchTechnique):
@@ -73,34 +88,26 @@ class Tuner:
             self._costs: Dict[Union[Coordinates, Index], Cost] = {}
 
             # generate search space
-            search_space_generation_start = time.perf_counter_ns()
-            self._search_space = SearchSpace(*tps,
-                                             enable_1d_access=isinstance(self._search_technique, SearchTechnique1D),
-                                             silent=silent)
-            search_space_generation_end = time.perf_counter_ns()
-            self._search_space_generation_ns = search_space_generation_end - search_space_generation_start
+            if isinstance(search_space, SearchSpace):
+                self._search_space = search_space
+            else:
+                self._search_space = SearchSpace(*search_space,
+                                                 enable_1d_access=isinstance(self._search_technique, SearchTechnique1D),
+                                                 silent=silent)
+            self._tps = self._search_space.tps
+            self._search_space_generation_ns = self._search_space.generation_ns
             if not silent:
                 print(f'search space size: {self._search_space.constrained_size}')
 
             # prepare abort condition
-            self._abort_condition: Optional[AbortCondition] = abort_condition
+            self._abort_condition = abort_condition
             if self._abort_condition is None:
                 self._abort_condition = Evaluations(len(self._search_space))
 
-            # tuning data
-            self._tps: Tuple[TP, ...] = tps
-            self._tuning_data: Optional[TuningData] = None
-            self._cost_function: CostFunction = cost_function
-
-            # progress data
-            self._silent = silent
-            self._log_file: Optional[TextIO] = None
+            # open log file
             if log_file:
                 Path(log_file).parent.mkdir(parents=True, exist_ok=True)
                 self._log_file = open(log_file, 'w')
-            self._last_log_dump: Optional[int] = None
-            self._last_line_length: Optional[int] = None
-            self._tuning_start_ns: Optional[int] = None
 
         def __del__(self):
             if self._log_file:
@@ -244,6 +251,7 @@ class Tuner:
                     print(f'min cost: {self._tuning_data.min_cost()}')
 
     def __init__(self):
+        self._search_space: Optional[SearchSpace] = None
         self._tps: Optional[Tuple[TP, ...]] = None
         self._search_technique: Optional[Union[SearchTechnique, SearchTechnique1D]] = None
         self._silent = False
@@ -251,10 +259,18 @@ class Tuner:
 
         self._tuning_run: Optional[Tuner.TuningRun] = None
 
+    def search_space(self, search_space: SearchSpace):
+        if self._tuning_run is not None:
+            raise ValueError('cannot change search space while tuning')
+        self._search_space = search_space
+        self._tps = None
+        return self
+
     def tuning_parameters(self, *tps: TP):
         if self._tuning_run is not None:
             raise ValueError('cannot change tuning parameters while tuning')
         self._tps = tuple(tps)
+        self._search_space = None
         return self
 
     def search_technique(self, search_technique: Union[SearchTechnique, SearchTechnique1D]):
@@ -279,7 +295,7 @@ class Tuner:
         if self._tuning_run is None:
             # create & initialize tuning run
             self._tuning_run = Tuner.TuningRun(
-                self._tps,
+                self._tps if self._tps is not None else self._search_space,
                 cost_function,
                 self._search_technique,
                 self._silent,
@@ -307,7 +323,7 @@ class Tuner:
 
         # create tuning run
         self._tuning_run = Tuner.TuningRun(
-            self._tps,
+            self._tps if self._tps is not None else self._search_space,
             cost_function,
             self._search_technique,
             self._silent,

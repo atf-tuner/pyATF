@@ -43,7 +43,10 @@ ChainOfTrees = List[ChainedTree]
 
 
 class SearchSpace:
-    def __init__(self, *tps: TP, enable_1d_access: bool = False, silent: bool = True):
+    def __init__(self, *tps: TP, enable_1d_access: bool = False, silent: bool = False):
+        search_space_generation_start = time.perf_counter_ns()
+
+        self._tps = tuple(tps)
         self._1d_access_enabled: bool = enable_1d_access
 
         # make TPs accessible by name
@@ -104,7 +107,7 @@ class SearchSpace:
             tp_group = [tp for tp in tp_group if tp is not None]
             independent_tp_groups.append(tp_group)
 
-        # TODO: reorder TPs to allow constraints that reference TPs defined later than the one it is assigned to
+        # TODO: reorder TPs to allow constraints that reference TPs defined later than the one it is assigned to (topological sort?)
         # TODO: optimize TP order to check constraints as early as possible
         # TODO: both operations above should bring TPs into an order independent from the order in which the TPs are defined
 
@@ -412,8 +415,15 @@ class SearchSpace:
                     self._cot.append(tree)
                     self._constrained_size *= num_leafs
 
+        search_space_generation_end = time.perf_counter_ns()
+        self._search_space_generation_ns = search_space_generation_end - search_space_generation_start
+
     def __len__(self):
         return self._constrained_size
+
+    @property
+    def tps(self):
+        return self._tps
 
     @property
     def cot(self):
@@ -434,6 +444,10 @@ class SearchSpace:
     @property
     def unconstrained_size(self):
         return self._unconstrained_size
+
+    @property
+    def generation_ns(self):
+        return self._search_space_generation_ns
 
     def get_configuration(self, coordinates_or_index: Union[Coordinates, Index]) -> Dict[str, Any]:
         if isinstance(coordinates_or_index, Index):
