@@ -53,14 +53,14 @@ SB = TP('SB', Set(0, 1),
 # Step 2: Implement a Cost Function
 saxpy_kernel = opencl.Kernel( opencl.source(sgemm_kernel_as_string), 'gemm_fast', ['-DPRECISION=32'] )  # kernel's code & name
 
-cf_saxpy = opencl.CostFunction( saxpy_kernel ).platform_id( 0 )                                   \
-                                              .device_id( 0 )                                     \
-                                              .inputs( np.int32( M )                            ,
-                                                       np.int32( N )                            ,
-                                                       np.int32( K )                            ,
-                                                       np.random.rand( M*K ).astype(np.float32) ,
-                                                       np.random.rand( N*K ).astype(np.float32) ,
-                                                       np.random.rand( M*N ).astype(np.float32) ) \
+cf_saxpy = opencl.CostFunction( saxpy_kernel ).platform_id( 0 )                                        \
+                                              .device_id( 0 )                                          \
+                                              .kernel_args( np.int32( M )                            ,
+                                                            np.int32( N )                            ,
+                                                            np.int32( K )                            ,
+                                                            np.random.rand( M*K ).astype(np.float32) ,
+                                                            np.random.rand( N*K ).astype(np.float32) ,
+                                                            np.random.rand( M*N ).astype(np.float32) ) \
                                               .global_size( lambda MWG, MDIMC: ((1 + ((M - 1) // MWG))*MWG * MDIMC) / MWG,
                                                             lambda NWG, NDIMC: ((1 + ((N - 1) // NWG))*NWG * NDIMC) / NWG) \
                                               .local_size( lambda MDIMC: MDIMC,

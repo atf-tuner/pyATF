@@ -38,9 +38,9 @@ pyATF provides the following pre-implemented cost functions:
 
     Target OpenCL device id.
 
-  .. py:function:: inputs(*inputs: Union[numpy.ndarray, numpy.generic])
+  .. py:function:: kernel_args(*kernel_args: Union[numpy.ndarray, numpy.generic])
 
-    Kernel's input arguments (specified as instances of :code:`numpy.ndarray` and :code:`numpy.generic`).
+    Kernel's arguments (specified as instances of :code:`numpy.ndarray` and :code:`numpy.generic`).
 
   .. py:function:: global_size(gs_0: Union[int, Callable[..., int]], gs_1: Union[int, Callable[..., int]] = 1, gs_2: Union[int, Callable[..., int]] = 1)
 
@@ -54,7 +54,7 @@ pyATF provides the following pre-implemented cost functions:
 
     Check result for scalar/buffer at position :code:`index` against :code:`gold_data_or_callable`.
 
-    :param gold_data_or_callable: either of type: i) :code:`numpy.ndarray`, ii) :code:`numpy.generic`, or iii) a callable using kernel's input scalars/buffers (of type :code:`numpy.generic`/:code:`numpy.ndarray`) to compute a gold scalar/buffer.
+    :param gold_data_or_callable: either of type: i) :code:`numpy.ndarray`, ii) :code:`numpy.generic`, or iii) a callable using kernel's scalar/buffer arguments (of type :code:`numpy.generic`/:code:`numpy.ndarray`) to compute a gold scalar/buffer.
 
     :param comparator: used for comparing kernel values against gold values; is a callable that takes two values as input (kernel and gold value) and returns True, iff the values are considered the same.
 
@@ -80,9 +80,9 @@ pyATF provides the following pre-implemented cost functions:
 
     Target CUDA device id.
 
-  .. py:function:: inputs(*inputs: Union[numpy.ndarray, numpy.generic])
+  .. py:function:: kernel_args(*kernel_args: Union[numpy.ndarray, numpy.generic])
 
-    Kernel's input arguments (specified as instances of :code:`numpy.ndarray` and :code:`numpy.generic`).
+    Kernel's arguments (specified as instances of :code:`numpy.ndarray` and :code:`numpy.generic`).
 
   .. py:function:: grid_dim(x: Union[int, Callable[..., int]], y: Union[int, Callable[..., int]] = 1, z: Union[int, Callable[..., int]] = 1)
 
@@ -96,7 +96,7 @@ pyATF provides the following pre-implemented cost functions:
 
     Check result for scalar/buffer at position :code:`index` against :code:`gold_data_or_callable`.
 
-    :param gold_data_or_callable: either of type: i) :code:`numpy.ndarray`, ii) :code:`numpy.generic`, or iii) a callable using kernel's input scalars/buffers (of type :code:`numpy.generic`/:code:`numpy.ndarray`) to compute a gold scalar/buffer.
+    :param gold_data_or_callable: either of type: i) :code:`numpy.ndarray`, ii) :code:`numpy.generic`, or iii) a callable using kernel's scalar/buffer arguments (of type :code:`numpy.generic`/:code:`numpy.ndarray`) to compute a gold scalar/buffer.
 
     :param comparator: used for comparing kernel values against gold values; is a callable that takes two values as input (kernel and gold value) and returns True, iff the values are considered the same.
 
