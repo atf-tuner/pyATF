@@ -53,7 +53,7 @@ class Tuner:
                      search_space: SearchSpace | Tuple[TP, ...],
                      cost_function: CostFunction,
                      search_technique: Optional[Union[SearchTechnique, SearchTechnique1D]],
-                     silent: Optional[bool],
+                     verbosity: Optional[int],
                      log_file: Optional[str],
                      abort_condition: Optional[AbortCondition]):
             if search_space is None:
@@ -68,7 +68,7 @@ class Tuner:
             self._cost_function: CostFunction = cost_function
 
             # progress data
-            self._silent = silent
+            self._verbosity = verbosity
             self._log_file: Optional[TextIO] = None
             self._last_log_dump: Optional[int] = None
             self._last_line_length: Optional[int] = None
@@ -93,10 +93,10 @@ class Tuner:
             else:
                 self._search_space = SearchSpace(*search_space,
                                                  enable_1d_access=isinstance(self._search_technique, SearchTechnique1D),
-                                                 silent=silent)
+                                                 verbosity=verbosity)
             self._tps = self._search_space.tps
             self._search_space_generation_ns = self._search_space.generation_ns
-            if not silent:
+            if self._verbosity >= 2:
                 print(f'search space size: {self._search_space.constrained_size}')
 
             # prepare abort condition
@@ -140,16 +140,17 @@ class Tuner:
                                 f':{elapsed_seconds // 60 % 60:02d}'
                                 f':{elapsed_seconds % 60:02d}')
             progress = self._abort_condition.progress(self._tuning_data)
-            line = (f'\r{timestamp.strftime("%Y-%m-%dT%H:%M:%S")}'
-                    f'    evaluations: {self._tuning_data.number_of_evaluated_configurations}'
-                    f' (valid: {self._tuning_data.number_of_evaluated_valid_configurations})'
-                    f', min. cost: {self._tuning_data.min_cost()}'
-                    f', valid: {cost is not None}'
-                    f', cost: {cost}')
-            line_length = len(line)
-            if line_length < self._last_line_length:
-                line += ' ' * (self._last_line_length - line_length)
-            print(line)
+            if self._verbosity >= 3:
+                line = (f'\r{timestamp.strftime("%Y-%m-%dT%H:%M:%S")}'
+                        f'    evaluations: {self._tuning_data.number_of_evaluated_configurations}'
+                        f' (valid: {self._tuning_data.number_of_evaluated_valid_configurations})'
+                        f', min. cost: {self._tuning_data.min_cost()}'
+                        f', valid: {cost is not None}'
+                        f', cost: {cost}')
+                line_length = len(line)
+                if line_length < self._last_line_length:
+                    line += ' ' * (self._last_line_length - line_length)
+                print(line)
             if progress is None:
                 spinner_char = ('-', '\\', '|', '/')[(elapsed_ns // 500000000) % 4]
                 line = f'\rTuning: {spinner_char} {elapsed_time_str}\r'
@@ -209,7 +210,7 @@ class Tuner:
             try:
                 cost = self._cost_function(config)
             except CostFunctionError as e:
-                if not self._silent:
+                if self._verbosity >= 3:
                     print('\r' + ' ' * self._last_line_length + '\r', end='')
                     print('Error raised: ' + e.message)
                     self._last_line_length = 0
@@ -227,7 +228,7 @@ class Tuner:
             self._costs[coords_or_index] = cost
 
             # print progress and dump log file (at most once every 5 minutes)
-            if not self._silent:
+            if self._verbosity >= 1:
                 self._print_progress(timestamp, cost)
             if self._log_file and (self._last_log_dump is None or time.perf_counter_ns() - self._last_log_dump > 3e11):
                 self.flush_log()
@@ -242,19 +243,20 @@ class Tuner:
                 self._log_file.close()
                 self._log_file = None
 
-            if not self._silent:
+            if self._verbosity >= 1:
                 print('\nfinished tuning')
-                if self._tuning_data.min_cost() is not None:
-                    print('best configuration:')
-                    for tp_name, tp_value in self._tuning_data.configuration_of_min_cost().items():
-                        print(f'    {tp_name} = {tp_value}')
-                    print(f'min cost: {self._tuning_data.min_cost()}')
+                if self._verbosity >= 2:
+                    if self._tuning_data.min_cost() is not None:
+                        print('best configuration:')
+                        for tp_name, tp_value in self._tuning_data.configuration_of_min_cost().items():
+                            print(f'    {tp_name} = {tp_value}')
+                        print(f'min cost: {self._tuning_data.min_cost()}')
 
     def __init__(self):
         self._search_space: Optional[SearchSpace] = None
         self._tps: Optional[Tuple[TP, ...]] = None
         self._search_technique: Optional[Union[SearchTechnique, SearchTechnique1D]] = None
-        self._silent = False
+        self._verbosity = 2
         self._log_file: Optional[str] = None
 
         self._tuning_run: Optional[Tuner.TuningRun] = None
@@ -279,10 +281,10 @@ class Tuner:
         self._search_technique = search_technique
         return self
 
-    def silent(self, silent: bool):
+    def verbosity(self, verbosity: int):
         if self._tuning_run is not None:
-            raise ValueError('cannot change silent property while tuning')
-        self._silent = silent
+            raise ValueError('cannot change verbosity property while tuning')
+        self._verbosity = verbosity
         return self
 
     def log_file(self, log_file: str):
@@ -298,7 +300,7 @@ class Tuner:
                 self._tps if self._tps is not None else self._search_space,
                 cost_function,
                 self._search_technique,
-                self._silent,
+                self._verbosity,
                 self._log_file,
                 None
             )
@@ -326,7 +328,7 @@ class Tuner:
             self._tps if self._tps is not None else self._search_space,
             cost_function,
             self._search_technique,
-            self._silent,
+            self._verbosity,
             self._log_file,
             abort_condition
         )
