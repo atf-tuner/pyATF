@@ -17,9 +17,13 @@ Tuner
 
     Sets the search technique for exploration.
 
-  .. py:function:: silent(silent: bool)
+  .. py:function:: verbosity(verbosity: int = 2)
 
-    Silences log messages.
+    Verbosity level of log messages.
+    0: no output.
+    1: progress bars for search space generation and exploration.
+    2: level 1 plus search space size and best configuration.
+    3: level 2 plus log of all tested configurations.
 
   .. py:function:: log_file(log_file: str)
 

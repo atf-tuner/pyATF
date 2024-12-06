@@ -4,4 +4,4 @@ if [ -d "./dist" ] && [ -n "$(ls -A "./dist")" ]; then
   echo "dist folder exists and is not empty"
   exit
 fi
-hatch build && hatch publish -u __token__
+python3 -m build && python3 -m twine upload dist/*

@@ -43,7 +43,7 @@ ChainOfTrees = List[ChainedTree]
 
 
 class SearchSpace:
-    def __init__(self, *tps: TP, enable_1d_access: bool = False, silent: bool = False):
+    def __init__(self, *tps: TP, enable_1d_access: bool = False, verbosity: int = 2):
         search_space_generation_start = time.perf_counter_ns()
 
         self._tps = tuple(tps)
@@ -156,7 +156,7 @@ class SearchSpace:
         tp_to_range_size: List[List[int]] = []
         finished_iterations = 0
         if enable_1d_access:
-            if not silent:
+            if verbosity >= 1:
                 # enable 1D access, with progress prints
                 for tp_group in independent_tp_groups:
                     tp_to_range_size.append([])
@@ -290,7 +290,7 @@ class SearchSpace:
                     self._constrained_size *= num_leafs
                     self._num_leafs.append(num_leafs)
         else:
-            if not silent:
+            if verbosity >= 1:
                 # no 1D access, with progress prints
                 for tp_group in independent_tp_groups:
                     tp_to_range_size.append([])
