@@ -9,8 +9,8 @@ For this, ATF introduces novel process to *generating*, *storing*, and *explorin
 ATF comes with easy-to-use user interfaces to make auto-tuning appealing also to common application developers.
 The Interfaces are based on either: 
   1. *Domain-Specific Language (DSL)*, for auto-tuning at compile time (a.k.a. offline tuning) (discussed [here](https://onlinelibrary.wiley.com/doi/full/10.1002/cpe.4423?casa_token=FO9i0maAi_MAAAAA%3AwSOYWsoqfLqcbazsprmzKkmI5msUCY4An5A7CCwi-_V8u10VdpgejcWuiTwYhWnZpaCJZ3NmXt86sg)); 
-  2. *General Purpose Language (GPL)*, for auto-tuning at runtime (a.k.a. online tuning), e.g., of *C++ programs* (referred to as [cppATF](https://github.com/atf-tuner/cppATF), and discussed [here](https://ieeexplore.ieee.org/abstract/document/8291912)) or *Python programs* (referred to as [pyATF](https://github.com/atf-tuner/pyATF), and discussed [here](https://dl.acm.org/doi/abs/10.1145/3708493.3712682).
-
+  2. *General Purpose Language (GPL)*, for auto-tuning at runtime (a.k.a. online tuning), e.g., of *C++ programs* (referred to as [cppATF](https://github.com/atf-tuner/cppATF), and discussed [here](https://ieeexplore.ieee.org/abstract/document/8291912)) or *Python programs* (referred to as [pyATF](https://github.com/atf-tuner/pyATF), and discussed [here](https://dl.acm.org/doi/abs/10.1145/3708493.3712682)).
+     
 **This repository contains *pyATF*, i.e., ATF with its GPL-based *Python interface*.**
 
 ## Documentation
