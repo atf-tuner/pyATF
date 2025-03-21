@@ -258,9 +258,29 @@ Please use the following citation, when referring to ATF's:
 
 <br>
 
-3. **GPL-Based**:
+3. **GPL-Based Interfaces**:
 
-- *C++ Interface*
+- *Python:*
+
+```latex
+@inproceedings{10.1145/3708493.3712682,
+author = {Schulze, Richard and Gorlatch, Sergei and Rasch, Ari},
+title = {pyATF: Constraint-Based Auto-Tuning in Python},
+year = {2025},
+isbn = {9798400714078},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+url = {https://doi.org/10.1145/3708493.3712682},
+doi = {10.1145/3708493.3712682},
+booktitle = {Proceedings of the 34th ACM SIGPLAN International Conference on Compiler Construction},
+pages = {35–47},
+numpages = {13},
+location = {Las Vegas, NV, USA},
+series = {CC '25}
+}
+```
+
+- *C++:*
 
 ```latex
 @INPROCEEDINGS{8291912,
@@ -273,10 +293,4 @@ Please use the following citation, when referring to ATF's:
   pages={64-71},
   doi={10.1109/HPCC-SmartCity-DSS.2017.9}
 }
-```
-
-- *Python Interface*
-
-```
-Comming soon!
 ```
