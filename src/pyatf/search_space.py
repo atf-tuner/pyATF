@@ -16,9 +16,6 @@ class Node:
         self.num_children: int = 0
         self.num_leafs: int = 0
 
-    def __len__(self):
-        return self.num_children
-
     def __iter__(self):
         yield from self._children
 
@@ -55,7 +52,7 @@ class SearchSpace:
             if tp.name in tp_by_name:
                 raise ValueError(f'duplicate parameter name: {tp.name}')
             tp_by_name[tp.name] = tp
-        self._tp_names: Tuple[str] = tuple(tp_by_name.keys())
+        self._tp_names: Tuple[str, ...] = tuple(tp_by_name.keys())
         self._num_tps: int = len(tp_by_name)
 
         # determine independent parameter groups by calculating undirected transitive closure of TPs
@@ -149,7 +146,7 @@ class SearchSpace:
         for tp_group in independent_tp_groups:
             for tp in tp_group:
                 self._cot_layer_to_tp_name.append(tp.name)
-                self._unconstrained_size *= len(tp.values)
+                self._unconstrained_size *= tp.values.num_values()
         self._partial_leaf_configs: List[List[Tuple[any, ...]]] = []  # stores config values along the path of each leaf
         self._num_leafs: List[int] = []
         total_iterations = 0
@@ -162,7 +159,7 @@ class SearchSpace:
                     tp_to_range_size.append([])
                     num_leafs = 1
                     for tp in tp_group:
-                        tp_to_range_size[-1].append(len(tp.values))
+                        tp_to_range_size[-1].append(tp.values.num_values())
                         num_leafs *= tp_to_range_size[-1][-1]
                     total_iterations += num_leafs
                 for tp_group_idx, tp_group in enumerate(independent_tp_groups):
@@ -170,7 +167,7 @@ class SearchSpace:
                     if len(tp_group) == 1 and tp_group[0].constraint is None:
                         # for TP groups with a single TP without constraints, conserve storage by storing
                         # the TP range in a single child node instead of generating one node per range value.
-                        num_leafs = len(tp_group[0].values)
+                        num_leafs = tp_group[0].values.num_values()
                         tree = ChainedTree()
                         tree.root.add_child(Node(tp_group[0].values))
                         tree.root.get_child(0).num_leafs = 1
@@ -204,7 +201,7 @@ class SearchSpace:
                                     tp_iter(tp_idx + 1, next_tps[0], tp_to_parameter_names[next_tps[0]], next_tps[1:],
                                             child_node)
                                     # only add child, if it has grandchildren
-                                    num_grandchildren = len(child_node)
+                                    num_grandchildren = child_node.num_children
                                     if num_grandchildren > 0:
                                         parent_node.add_child(child_node)
                                         child_node.num_leafs = 0
@@ -222,7 +219,7 @@ class SearchSpace:
                                         lambda x, y: x * y, tp_to_range_size[tp_group_idx][tp_idx + 1:], 1
                                     )
                             else:
-                                finished_iterations += len(tp.values)
+                                finished_iterations += tp.values.num_values()
                             progress_printer(finished_iterations / total_iterations)
 
                         tree = ChainedTree()
@@ -242,7 +239,7 @@ class SearchSpace:
                     if len(tp_group) == 1 and tp_group[0].constraint is None:
                         # for TP groups with a single TP without constraints, conserve storage by storing
                         # the TP range in a single child node instead of generating one node per range value.
-                        num_leafs = len(tp_group[0].values)
+                        num_leafs = tp_group[0].values.num_values()
                         tree = ChainedTree()
                         tree.root.add_child(Node(tp_group[0].values))
                         tree.root.get_child(0).num_leafs = 1
@@ -271,7 +268,7 @@ class SearchSpace:
                                 if next_tps:
                                     tp_iter(next_tps[0], tp_to_parameter_names[next_tps[0]], next_tps[1:], child_node)
                                     # only add child, if it has grandchildren
-                                    num_grandchildren = len(child_node)
+                                    num_grandchildren = child_node.num_children
                                     if num_grandchildren > 0:
                                         parent_node.add_child(child_node)
                                         child_node.num_leafs = 0
@@ -296,14 +293,14 @@ class SearchSpace:
                     tp_to_range_size.append([])
                     num_leafs = 1
                     for tp in tp_group:
-                        tp_to_range_size[-1].append(len(tp.values))
+                        tp_to_range_size[-1].append(tp.values.num_values())
                         num_leafs *= tp_to_range_size[-1][-1]
                     total_iterations += num_leafs
                 for tp_group_idx, tp_group in enumerate(independent_tp_groups):
                     if len(tp_group) == 1 and tp_group[0].constraint is None:
                         # for TP groups with a single TP without constraints, conserve storage by storing
                         # the TP range in a single child node instead of generating one node per range value.
-                        num_leafs = len(tp_group[0].values)
+                        num_leafs = tp_group[0].values.num_values()
                         tree = ChainedTree()
                         tree.root.add_child(Node(tp_group[0].values))
                         tree.root.get_child(0).num_leafs = 1
@@ -336,7 +333,7 @@ class SearchSpace:
                                     tp_iter(tp_idx + 1, next_tps[0], tp_to_parameter_names[next_tps[0]], next_tps[1:],
                                             child_node)
                                     # only add child, if it has grandchildren
-                                    num_grandchildren = len(child_node)
+                                    num_grandchildren = child_node.num_children
                                     if num_grandchildren > 0:
                                         parent_node.add_child(child_node)
                                         child_node.num_leafs = 0
@@ -352,7 +349,7 @@ class SearchSpace:
                                         lambda x, y: x * y, tp_to_range_size[tp_group_idx][tp_idx + 1:], 1
                                     )
                             else:
-                                finished_iterations += len(tp.values)
+                                finished_iterations += tp.values.num_values()
                             progress_printer(finished_iterations / total_iterations)
 
                         tree = ChainedTree()
@@ -369,7 +366,7 @@ class SearchSpace:
                     if len(tp_group) == 1 and tp_group[0].constraint is None:
                         # for TP groups with a single TP without constraints, conserve storage by storing
                         # the TP range in a single child node instead of generating one node per range value.
-                        num_leafs = len(tp_group[0].values)
+                        num_leafs = tp_group[0].values.num_values()
                         tree = ChainedTree()
                         tree.root.add_child(Node(tp_group[0].values))
                         tree.root.get_child(0).num_leafs = 1
@@ -397,7 +394,7 @@ class SearchSpace:
                                 if next_tps:
                                     tp_iter(next_tps[0], tp_to_parameter_names[next_tps[0]], next_tps[1:], child_node)
                                     # only add child, if it has grandchildren
-                                    num_grandchildren = len(child_node)
+                                    num_grandchildren = child_node.num_children
                                     if num_grandchildren > 0:
                                         parent_node.add_child(child_node)
                                         child_node.num_leafs = 0
@@ -416,9 +413,6 @@ class SearchSpace:
 
         search_space_generation_end = time.perf_counter_ns()
         self._search_space_generation_ns = search_space_generation_end - search_space_generation_start
-
-    def __len__(self):
-        return self._constrained_size
 
     @property
     def tps(self):
@@ -509,7 +503,7 @@ class SearchSpace:
                     node = node.get_child(0)
                     assert node.num_children == 0  # TPs stored by range are currently only supported for leaf nodes
                     # no bias correction necessary, since node is a leaf
-                    index = ceil(coordinate * len(node.data)) - 1
+                    index = ceil(coordinate * node.data.num_values()) - 1
                     config[self._cot_layer_to_tp_name[layer]] = node.data[index]
                 else:
                     # TP values are represented as child nodes

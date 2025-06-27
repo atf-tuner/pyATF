@@ -10,7 +10,7 @@ class TestNode(unittest.TestCase):
     def test_init(self):
         d1 = object()
         n = Node(d1)
-        self.assertEqual(0, len(n))
+        self.assertEqual(0, n.num_children)
         self.assertEqual(0, n.num_leafs)
         self.assertIs(d1, n.data)
 
@@ -18,23 +18,23 @@ class TestNode(unittest.TestCase):
         d1, d2 = object(), object()
 
         n = Node(None)
-        self.assertEqual(0, len(n))
+        self.assertEqual(0, n.num_children)
         self.assertIsNone(n.data)
 
         c1 = Node(d1)
         n.add_child(c1)
-        self.assertEqual(1, len(n))
+        self.assertEqual(1, n.num_children)
         self.assertIsNone(n.data)
-        self.assertEqual(0, len(c1))
+        self.assertEqual(0, c1.num_children)
         self.assertIs(d1, c1.data)
 
         c2 = Node(d2)
         n.add_child(c2)
-        self.assertEqual(2, len(n))
+        self.assertEqual(2, n.num_children)
         self.assertIsNone(n.data)
-        self.assertEqual(0, len(c1))
+        self.assertEqual(0, c1.num_children)
         self.assertIs(d1, c1.data)
-        self.assertEqual(0, len(c2))
+        self.assertEqual(0, c2.num_children)
         self.assertIs(d2, c2.data)
 
     def test_get_child(self):
@@ -61,14 +61,14 @@ class TestSearchSpace(unittest.TestCase):
         self.assertEqual(len(gold), len(value))
 
         def deep_compare(value: Node, gold_num_leafs: int, gold: Sequence[Tuple[Any, Union[Dict, None], int]]):
-            self.assertEqual(len(gold), len(value))
+            self.assertEqual(len(gold), value.num_children)
             self.assertEqual(gold_num_leafs, value.num_leafs)
-            for idx in range(len(value)):
+            for idx in range(value.num_children):
                 child = value.get_child(idx)
                 gold_data, gold_grandchildren, gold_child_num_leafs = gold[idx]
                 self.assertIs(gold_data, child.data)
                 self.assertIs(gold_child_num_leafs, child.num_leafs)
-                if len(child) > 0 or gold_grandchildren is not None:
+                if child.num_children > 0 or gold_grandchildren is not None:
                     deep_compare(child, gold_child_num_leafs,
                                  [(data, children, num_leafs)
                                   for data, (children, num_leafs) in gold_grandchildren.items()])
@@ -82,7 +82,7 @@ class TestSearchSpace(unittest.TestCase):
         tp1 = TP('tp1', Interval(1, 10))
         search_space = SearchSpace(tp1)
         self._check_cot(search_space.cot, [({tp1.values: (None, 1)}, 10)])
-        self.assertEqual(10, len(search_space))
+        self.assertEqual(10, search_space.constrained_size)
         self.assertEqual({'tp1': 1}, search_space.get_configuration((0.00001,)))
         self.assertEqual({'tp1': 1}, search_space.get_configuration((0.10000,)))
         self.assertEqual({'tp1': 8}, search_space.get_configuration((0.70001,)))
@@ -94,7 +94,7 @@ class TestSearchSpace(unittest.TestCase):
         tp1 = TP('tp1', Set(1, 2, 3))
         search_space = SearchSpace(tp1)
         self._check_cot(search_space.cot, [({tp1.values: (None, 1)}, 3)])
-        self.assertEqual(3, len(search_space))
+        self.assertEqual(3, search_space.constrained_size)
         self.assertEqual({'tp1': 1}, search_space.get_configuration((0.00001,)))
         self.assertEqual({'tp1': 2}, search_space.get_configuration((0.50000,)))
         self.assertEqual({'tp1': 3}, search_space.get_configuration((1.00000,)))
@@ -104,7 +104,7 @@ class TestSearchSpace(unittest.TestCase):
         tp2 = TP('tp2', Set(5, 6, 7, 8, 9, 10))
         search_space = SearchSpace(tp1, tp2)
         self._check_cot(search_space.cot, [({tp1.values: (None, 1)}, 10), ({tp2.values: (None, 1)}, 6)])
-        self.assertEqual(60, len(search_space))
+        self.assertEqual(60, search_space.constrained_size)
         self.assertEqual({'tp1': 1, 'tp2': 5}, search_space.get_configuration((0.00001, 0.00001)))
         self.assertEqual({'tp1': 4, 'tp2': 8}, search_space.get_configuration((0.30001, 0.50001)))
         self.assertEqual({'tp1': 4, 'tp2': 10}, search_space.get_configuration((0.30001, 1.00000)))
@@ -126,7 +126,7 @@ class TestSearchSpace(unittest.TestCase):
                  10: ({10: ({2: (None, 1)}, 1)}, 1)
              }, 11)
         ])
-        self.assertEqual(11, len(search_space))
+        self.assertEqual(11, search_space.constrained_size)
         self.assertEqual({'tp1': 2, 'tp2': 6, 'tp3': 2}, search_space.get_configuration((0.00001, 0.00001, 0.00001)))
         self.assertEqual({'tp1': 2, 'tp2': 8, 'tp3': 2}, search_space.get_configuration((0.00001, 0.66666, 1.00000)))
         self.assertEqual({'tp1': 6, 'tp2': 6, 'tp3': 2}, search_space.get_configuration((0.60000, 0.00001, 0.50000)))
@@ -167,7 +167,7 @@ class TestSearchSpace(unittest.TestCase):
                               6: (None, 1), 7: (None, 1), 8: (None, 1), 9: (None, 1), 10: (None, 1)}, 10)}, 19)
              }, 20)
         ])
-        self.assertEqual(220, len(search_space))
+        self.assertEqual(220, search_space.constrained_size)
         self.assertEqual({'tp1': 3, 'tp2': 6, 'tp3': 3, 'tp4': min, 'tp5': 10, 'tp6': 10},
                          search_space.get_configuration((0.27273, 0.00001, 0.00001, 0.00001, 0.00001, 0.00001)))
         self.assertEqual({'tp1': 3, 'tp2': 6, 'tp3': 3, 'tp4': min, 'tp5': 10, 'tp6': 10},
@@ -222,7 +222,7 @@ class TestSearchSpace(unittest.TestCase):
              }, 20),
             ({tp7.values: (None, 1)}, 2)
         ])
-        self.assertEqual(440, len(search_space))
+        self.assertEqual(440, search_space.constrained_size)
         self.assertEqual({'tp1': 2, 'tp2': 6, 'tp3': 2, 'tp4': min, 'tp5': 10, 'tp6': 10, 'tp7': 1},
                          search_space.get_configuration(0))
         self.assertEqual({'tp1': 2, 'tp2': 6, 'tp3': 2, 'tp4': min, 'tp5': 10, 'tp6': 10, 'tp7': 2},

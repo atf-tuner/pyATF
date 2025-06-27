@@ -102,7 +102,7 @@ class Tuner:
             # prepare abort condition
             self._abort_condition = abort_condition
             if self._abort_condition is None:
-                self._abort_condition = Evaluations(len(self._search_space))
+                self._abort_condition = Evaluations(self._search_space.constrained_size)
 
             # open log file
             if log_file:
@@ -189,7 +189,7 @@ class Tuner:
 
             # initialize search technique
             if isinstance(self._search_technique, SearchTechnique1D):
-                self._search_technique.initialize(len(self._search_space))
+                self._search_technique.initialize(self._search_space.constrained_size)
             else:
                 self._search_technique.initialize(self._search_space.num_tps)
 
