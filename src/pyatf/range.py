@@ -4,7 +4,7 @@ from typing import Optional, Callable, Union
 
 
 class Range:
-    def __len__(self):
+    def num_values(self):
         raise NotImplementedError
 
     def __iter__(self):
@@ -90,7 +90,7 @@ class Interval(Range):
             yield self._generator(next_value)
             next_value += self._step
 
-    def __len__(self):
+    def num_values(self):
         return self._num_values
 
     def __iter__(self):
@@ -121,7 +121,7 @@ class Set(Range):
         self._values = tuple(values)
         self._num_values = len(values)
 
-    def __len__(self):
+    def num_values(self):
         return self._num_values
 
     def __iter__(self):

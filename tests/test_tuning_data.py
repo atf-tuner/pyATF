@@ -46,8 +46,8 @@ class TestTuningData(unittest.TestCase):
         search_space_generation_end = time.perf_counter_ns()
         tuning_data = TuningData(
             [tp1.to_json(), tp2.to_json(), tp3.to_json()],
-            len(search_space),
-            len(tp1.values) * len(tp2.values) * len(tp3.values),
+            search_space.constrained_size,
+            tp1.values.num_values() * tp2.values.num_values() * tp3.values.num_values(),
             search_space_generation_end - search_space_generation_start,
             Random().to_json(),
             Evaluations(6).to_json()
