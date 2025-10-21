@@ -5,13 +5,13 @@ from math import ceil
 from typing import Union, Tuple, Callable, Optional, Set, Dict, Iterable, Any, TextIO
 
 import numpy
-from cuda import cuda, nvrtc
+from cuda.bindings import driver, nvrtc
 
 from pyatf.result_check import equality
 from pyatf.tuning_data import Configuration, Cost, CostFunctionError
 
-cuda_init_err, = cuda.cuInit(0)
-if cuda_init_err != cuda.CUresult.CUDA_SUCCESS:
+cuda_init_err, = driver.cuInit(0)
+if cuda_init_err != driver.CUresult.CUDA_SUCCESS:
     raise ValueError(f'CUDA failed with error: {cuda_init_err}')
 
 
@@ -94,10 +94,10 @@ class CostFunction:
         self._log_file_writer = None
 
         self._objects_to_free_on_error: Dict[Any, Callable] = {}
-        self._cu_device: Optional[cuda.CUdevice] = None
-        self._cu_context: Optional[cuda.CUcontext] = None
-        self._cu_stream: Optional[cuda.CUstream] = None
-        self._cu_device_ptr: Dict[int, cuda.CUdeviceptr] = {}
+        self._cu_device: Optional[driver.CUdevice] = None
+        self._cu_context: Optional[driver.CUcontext] = None
+        self._cu_stream: Optional[driver.CUstream] = None
+        self._cu_device_ptr: Dict[int, driver.CUdeviceptr] = {}
 
     def _free_objects_before_error(self):
         for obj, free_method in self._objects_to_free_on_error.items():
@@ -106,7 +106,7 @@ class CostFunction:
 
     def _safe_call(
             self,
-            returns: Union[cuda.CUresult, nvrtc.nvrtcResult, Tuple[Union[cuda.CUresult, nvrtc.nvrtcResult], ...]],
+            returns: Union[driver.CUresult, nvrtc.nvrtcResult, Tuple[Union[driver.CUresult, nvrtc.nvrtcResult], ...]],
             message: str, meta_data: Dict[str, Any] = None
     ):
         if isinstance(returns, tuple):
@@ -114,8 +114,8 @@ class CostFunction:
             returns = returns[1:]
         else:
             err = returns
-        if isinstance(err, cuda.CUresult):
-            if err != cuda.CUresult.CUDA_SUCCESS:
+        if isinstance(err, driver.CUresult):
+            if err != driver.CUresult.CUDA_SUCCESS:
                 if meta_data is not None:
                     meta_data['cuda_error'] = err
                 raise CostFunction._CUDAError(f'CUDA failed with error: {err}\n{message}')
@@ -268,10 +268,10 @@ class CostFunction:
 
             # load PTX as module and retrieve function
             ptx = numpy.char.array(ptx)
-            module = self._safe_call(cuda.cuModuleLoadData(ptx.ctypes.data),
+            module = self._safe_call(driver.cuModuleLoadData(ptx.ctypes.data),
                                      'failed to load PTX', meta_data)
-            self._objects_to_free_on_error[module] = cuda.cuModuleUnload
-            kernel = self._safe_call(cuda.cuModuleGetFunction(module, str.encode(self._kernel.name)),
+            self._objects_to_free_on_error[module] = driver.cuModuleUnload
+            kernel = self._safe_call(driver.cuModuleGetFunction(module, str.encode(self._kernel.name)),
                                      'failed to get module function', meta_data)
 
             # calculate grid and block dim
@@ -326,7 +326,7 @@ class CostFunction:
             # warmups
             for _ in range(self._warmups):
                 self._cpy_to_device()
-                self._safe_call(cuda.cuLaunchKernel(kernel, *grid_dim, *block_dim, 0,
+                self._safe_call(driver.cuLaunchKernel(kernel, *grid_dim, *block_dim, 0,
                                                     self._cu_stream, args.ctypes.data, 0),
                                 'failed to launch kernel', meta_data)
 
@@ -334,28 +334,28 @@ class CostFunction:
             avg_runtime = 0.0
             for e in range(self._evaluations):
                 self._cpy_to_device()
-                pre_kernel_event = self._safe_call(cuda.cuEventCreate(0),
+                pre_kernel_event = self._safe_call(driver.cuEventCreate(0),
                                                    'failed to create pre-kernel event', meta_data)
-                self._objects_to_free_on_error[pre_kernel_event] = cuda.cuEventDestroy
-                post_kernel_event = self._safe_call(cuda.cuEventCreate(0),
+                self._objects_to_free_on_error[pre_kernel_event] = driver.cuEventDestroy
+                post_kernel_event = self._safe_call(driver.cuEventCreate(0),
                                                     'failed to create post-kernel event', meta_data)
-                self._objects_to_free_on_error[post_kernel_event] = cuda.cuEventDestroy
-                self._safe_call(cuda.cuEventRecord(pre_kernel_event, self._cu_stream),
+                self._objects_to_free_on_error[post_kernel_event] = driver.cuEventDestroy
+                self._safe_call(driver.cuEventRecord(pre_kernel_event, self._cu_stream),
                                 'failed to record pre-kernel event', meta_data)
-                self._safe_call(cuda.cuLaunchKernel(kernel, *grid_dim, *block_dim, 0,
+                self._safe_call(driver.cuLaunchKernel(kernel, *grid_dim, *block_dim, 0,
                                                     self._cu_stream, args.ctypes.data, 0),
                                 'failed to launch kernel', meta_data)
-                self._safe_call(cuda.cuEventRecord(post_kernel_event, self._cu_stream),
+                self._safe_call(driver.cuEventRecord(post_kernel_event, self._cu_stream),
                                 'failed to record post-kernel event', meta_data)
-                self._safe_call(cuda.cuEventSynchronize(post_kernel_event),
+                self._safe_call(driver.cuEventSynchronize(post_kernel_event),
                                 'failed to synchronize with post-kernel event', meta_data)
-                avg_runtime += self._safe_call(cuda.cuEventElapsedTime(pre_kernel_event, post_kernel_event),
+                avg_runtime += self._safe_call(driver.cuEventElapsedTime(pre_kernel_event, post_kernel_event),
                                                'failed to get elapsed time between kernel events', meta_data) * 1000000
                 del self._objects_to_free_on_error[post_kernel_event]
-                self._safe_call(cuda.cuEventDestroy(post_kernel_event),
+                self._safe_call(driver.cuEventDestroy(post_kernel_event),
                                 'failed to destroy post-kernel event', meta_data)
                 del self._objects_to_free_on_error[pre_kernel_event]
-                self._safe_call(cuda.cuEventDestroy(pre_kernel_event),
+                self._safe_call(driver.cuEventDestroy(pre_kernel_event),
                                 'failed to destroy pre-kernel event', meta_data)
                 # result check
                 if e == 0 and self._gold_data:
@@ -384,7 +384,7 @@ class CostFunction:
 
             # free program resources
             del self._objects_to_free_on_error[module]
-            self._safe_call(cuda.cuModuleUnload(module),
+            self._safe_call(driver.cuModuleUnload(module),
                             'failed to unload module', meta_data)
             del self._objects_to_free_on_error[nvrtc_program]
             self._safe_call(nvrtc.nvrtcDestroyProgram(nvrtc_program),
@@ -407,22 +407,22 @@ class CostFunction:
 
     def _init_device(self):
         if self._device_id is not None:
-            self._cu_device = self._safe_call(cuda.cuDeviceGet(self._device_id),
+            self._cu_device = self._safe_call(driver.cuDeviceGet(self._device_id),
                                               'failed to retrieve device handle')
             if not self._silent:
-                device_name = self._safe_call(cuda.cuDeviceGetName(1024, self._cu_device),
+                device_name = self._safe_call(driver.cuDeviceGetName(1024, self._cu_device),
                                               'failed to get device name')
                 device_name = str(device_name, encoding='ascii').strip()[:-1]
                 print(f'selecting CUDA device {self._device_id}: {device_name}')
-            self._cu_context = self._safe_call(cuda.cuCtxCreate(0, self._cu_device),
+            self._cu_context = self._safe_call(driver.cuCtxCreate(0, self._cu_device),
                                                'failed to create context')
-            self._cu_stream = self._safe_call(cuda.cuStreamCreate(0),
+            self._cu_stream = self._safe_call(driver.cuStreamCreate(0),
                                               'failed to create stream')
 
     def _alloc_buffers(self):
         if self._cu_context is not None:
             self._cu_device_ptr = {
-                idx: self._safe_call(cuda.cuMemAlloc(inp.nbytes),
+                idx: self._safe_call(driver.cuMemAlloc(inp.nbytes),
                                      f'failed to allocate CUDA device memory for kernel argument {idx}')
                 for idx, inp in self._kernel_args.items() if isinstance(inp, numpy.ndarray)
             }
@@ -431,9 +431,9 @@ class CostFunction:
         if self._cu_stream is not None:
             for idx, deviceptr in self._cu_device_ptr.items():
                 ndarray = self._kernel_args[idx]
-                self._safe_call(cuda.cuMemcpyHtoDAsync(deviceptr, ndarray.ctypes.data, ndarray.nbytes, self._cu_stream),
+                self._safe_call(driver.cuMemcpyHtoDAsync(deviceptr, ndarray.ctypes.data, ndarray.nbytes, self._cu_stream),
                                 f'failed to copy data from host to CUDA device memory for kernel argument {idx}')
-            self._safe_call(cuda.cuStreamSynchronize(self._cu_stream),
+            self._safe_call(driver.cuStreamSynchronize(self._cu_stream),
                             f'failed to synchronize after host to device copy')
 
     def _cpy_to_host(self, host_memory: Dict[int, numpy.ndarray] = None):
@@ -442,25 +442,25 @@ class CostFunction:
                 host_memory = self._kernel_args
             for idx, host_data in host_memory.items():
                 if isinstance(host_data, numpy.ndarray):
-                    self._safe_call(cuda.cuMemcpyDtoHAsync(host_data.ctypes.data, self._cu_device_ptr[idx],
+                    self._safe_call(driver.cuMemcpyDtoHAsync(host_data.ctypes.data, self._cu_device_ptr[idx],
                                                            host_data.nbytes, self._cu_stream),
                                     f'failed to copy data from CUDA device memory to host for kernel argument {idx}')
-            self._safe_call(cuda.cuStreamSynchronize(self._cu_stream),
+            self._safe_call(driver.cuStreamSynchronize(self._cu_stream),
                             f'failed to synchronize after device to host copy')
 
     def _free_buffers(self):
         for idx, deviceptr in self._cu_device_ptr.items():
-            self._safe_call(cuda.cuMemFree(deviceptr),
+            self._safe_call(driver.cuMemFree(deviceptr),
                             f'failed to free CUDA device memory for kernel argument {idx}')
         self._cu_device_ptr.clear()
 
     def _free_device(self):
         if self._cu_stream is not None:
-            self._safe_call(cuda.cuStreamDestroy(self._cu_stream),
+            self._safe_call(driver.cuStreamDestroy(self._cu_stream),
                             'failed to destroy stream')
             self._cu_stream = None
         if self._cu_context is not None:
-            self._safe_call(cuda.cuCtxDestroy(self._cu_context),
+            self._safe_call(driver.cuCtxDestroy(self._cu_context),
                             'failed to destroy context')
             self._cu_context = None
         self._cu_device = None
