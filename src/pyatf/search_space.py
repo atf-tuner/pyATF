@@ -61,16 +61,11 @@ class SearchSpace:
         REFERENCING = 'referencing'
         REFERENCED_BY = 'referenced_by'
         reach = {source_tp: {target_tp: UNREACHABLE for target_tp in tps} for source_tp in tps}
-        defined_tps = set()
         for tp in tps:
-            defined_tps.add(tp.name)
             if tp.constraint:
                 ref_tp_names = set(inspect.signature(tp.constraint).parameters.keys())
                 if tp.name not in ref_tp_names:
                     raise ValueError(f'constraint for TP {tp.name} has to take at least itself as a parameter')
-                if not ref_tp_names.issubset(defined_tps):
-                    raise ValueError(f'constraint for TP {tp.name} references TPs that have not yet been defined: '
-                                     f'{", ".join(ref_tp_names.difference(defined_tps))}')
                 ref_tp_names.remove(tp.name)
                 ref_tps = set(tp_by_name[ref_tp_name] for ref_tp_name in ref_tp_names)
                 for ref_tp in ref_tps:
@@ -102,11 +97,19 @@ class SearchSpace:
                     if reach[tp][dependent_tp] != UNREACHABLE and dependent_tp not in frontier:
                         frontier.append(dependent_tp)
             tp_group = [tp for tp in tp_group if tp is not None]
+
+            # use bubble sort to bring tp_group into an order where constraints only reference earlier TPs in tp_group
+            tp_group_len = len(tp_group)
+            for idx1 in range(tp_group_len):
+                for idx2 in range(idx1 + 1, tp_group_len):
+                    tp1 = tp_group[idx1]
+                    tp2 = tp_group[idx2]
+                    if reach[tp1][tp2] == REFERENCING:
+                        tp_group[idx1], tp_group[idx2] = tp_group[idx2], tp_group[idx1]
+
             independent_tp_groups.append(tp_group)
 
-        # TODO: reorder TPs to allow constraints that reference TPs defined later than the one it is assigned to (topological sort?)
-        # TODO: optimize TP order to check constraints as early as possible
-        # TODO: both operations above should bring TPs into an order independent from the order in which the TPs are defined
+        # TODO: optimize TP order to check constraints as early as possible (order should be independent from the order in which the TPs are defined)
 
         # prepare progress printer
         generation_start_ns = time.perf_counter_ns()
