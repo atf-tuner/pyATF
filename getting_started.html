@@ -1,0 +1,560 @@
+<!doctype html>
+<html class="no-js" lang="en" data-content_root="./">
+  <head><meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="index" title="Index" href="genindex.html"><link rel="search" title="Search" href="search.html"><link rel="next" title="API Reference" href="api_reference/index.html"><link rel="prev" title="pyATF: The Auto-Tuning Framework (ATF) in Python" href="index.html">
+
+    <!-- Generated with Sphinx 8.2.3 and Furo 2025.09.25 -->
+        <title>Getting Started - pyATF: The Auto-Tuning Framework (ATF) in Python</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=d111a655" />
+    <link rel="stylesheet" type="text/css" href="_static/styles/furo.css?v=580074bf" />
+    <link rel="stylesheet" type="text/css" href="_static/styles/furo-extensions.css?v=8dab3a3b" />
+    
+    
+
+
+<style>
+  body {
+    --color-code-background: #f2f2f2;
+  --color-code-foreground: #1e1e1e;
+  
+  }
+  @media not print {
+    body[data-theme="dark"] {
+      --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+    }
+    @media (prefers-color-scheme: dark) {
+      body:not([data-theme="light"]) {
+        --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+      }
+    }
+  }
+</style></head>
+  <body>
+    
+    <script>
+      document.body.dataset.theme = localStorage.getItem("theme") || "auto";
+    </script>
+    
+
+<svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+  <symbol id="svg-toc" viewBox="0 0 24 24">
+    <title>Contents</title>
+    <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 1024 1024">
+      <path d="M408 442h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8zm-8 204c0 4.4 3.6 8 8 8h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56zm504-486H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zm0 632H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zM115.4 518.9L271.7 642c5.8 4.6 14.4.5 14.4-6.9V388.9c0-7.4-8.5-11.5-14.4-6.9L115.4 505.1a8.74 8.74 0 0 0 0 13.8z"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-menu" viewBox="0 0 24 24">
+    <title>Menu</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-menu">
+      <line x1="3" y1="12" x2="21" y2="12"></line>
+      <line x1="3" y1="6" x2="21" y2="6"></line>
+      <line x1="3" y1="18" x2="21" y2="18"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-arrow-right" viewBox="0 0 24 24">
+    <title>Expand</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-chevron-right">
+      <polyline points="9 18 15 12 9 6"></polyline>
+    </svg>
+  </symbol>
+  <symbol id="svg-sun" viewBox="0 0 24 24">
+    <title>Light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="feather-sun">
+      <circle cx="12" cy="12" r="5"></circle>
+      <line x1="12" y1="1" x2="12" y2="3"></line>
+      <line x1="12" y1="21" x2="12" y2="23"></line>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+      <line x1="1" y1="12" x2="3" y2="12"></line>
+      <line x1="21" y1="12" x2="23" y2="12"></line>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon" viewBox="0 0 24 24">
+    <title>Dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-moon">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />
+    </svg>
+  </symbol>
+  <symbol id="svg-sun-with-moon" viewBox="0 0 24 24">
+    <title>Auto light/dark, in light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+      class="icon-custom-derived-from-feather-sun-and-tabler-moon">
+      <path style="opacity: 50%" d="M 5.411 14.504 C 5.471 14.504 5.532 14.504 5.591 14.504 C 3.639 16.319 4.383 19.569 6.931 20.352 C 7.693 20.586 8.512 20.551 9.25 20.252 C 8.023 23.207 4.056 23.725 2.11 21.184 C 0.166 18.642 1.702 14.949 4.874 14.536 C 5.051 14.512 5.231 14.5 5.411 14.5 L 5.411 14.504 Z"/>
+      <line x1="14.5" y1="3.25" x2="14.5" y2="1.25"/>
+      <line x1="14.5" y1="15.85" x2="14.5" y2="17.85"/>
+      <line x1="10.044" y1="5.094" x2="8.63" y2="3.68"/>
+      <line x1="19" y1="14.05" x2="20.414" y2="15.464"/>
+      <line x1="8.2" y1="9.55" x2="6.2" y2="9.55"/>
+      <line x1="20.8" y1="9.55" x2="22.8" y2="9.55"/>
+      <line x1="10.044" y1="14.006" x2="8.63" y2="15.42"/>
+      <line x1="19" y1="5.05" x2="20.414" y2="3.636"/>
+      <circle cx="14.5" cy="9.55" r="3.6"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon-with-sun" viewBox="0 0 24 24">
+    <title>Auto light/dark, in dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+      class="icon-custom-derived-from-feather-sun-and-tabler-moon">
+      <path d="M 8.282 7.007 C 8.385 7.007 8.494 7.007 8.595 7.007 C 5.18 10.184 6.481 15.869 10.942 17.24 C 12.275 17.648 13.706 17.589 15 17.066 C 12.851 22.236 5.91 23.143 2.505 18.696 C -0.897 14.249 1.791 7.786 7.342 7.063 C 7.652 7.021 7.965 7 8.282 7 L 8.282 7.007 Z"/>
+      <line style="opacity: 50%" x1="18" y1="3.705" x2="18" y2="2.5"/>
+      <line style="opacity: 50%" x1="18" y1="11.295" x2="18" y2="12.5"/>
+      <line style="opacity: 50%" x1="15.316" y1="4.816" x2="14.464" y2="3.964"/>
+      <line style="opacity: 50%" x1="20.711" y1="10.212" x2="21.563" y2="11.063"/>
+      <line style="opacity: 50%" x1="14.205" y1="7.5" x2="13.001" y2="7.5"/>
+      <line style="opacity: 50%" x1="21.795" y1="7.5" x2="23" y2="7.5"/>
+      <line style="opacity: 50%" x1="15.316" y1="10.184" x2="14.464" y2="11.036"/>
+      <line style="opacity: 50%" x1="20.711" y1="4.789" x2="21.563" y2="3.937"/>
+      <circle style="opacity: 50%" cx="18" cy="7.5" r="2.169"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-pencil" viewBox="0 0 24 24">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-pencil-code">
+      <path d="M4 20h4l10.5 -10.5a2.828 2.828 0 1 0 -4 -4l-10.5 10.5v4" />
+      <path d="M13.5 6.5l4 4" />
+      <path d="M20 21l2 -2l-2 -2" />
+      <path d="M17 17l-2 2l2 2" />
+    </svg>
+  </symbol>
+  <symbol id="svg-eye" viewBox="0 0 24 24">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-eye-code">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" />
+      <path
+        d="M11.11 17.958c-3.209 -.307 -5.91 -2.293 -8.11 -5.958c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6c-.21 .352 -.427 .688 -.647 1.008" />
+      <path d="M20 21l2 -2l-2 -2" />
+      <path d="M17 17l-2 2l2 2" />
+    </svg>
+  </symbol>
+</svg>
+
+<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation" aria-label="Toggle site navigation sidebar">
+<input type="checkbox" class="sidebar-toggle" name="__toc" id="__toc" aria-label="Toggle table of contents sidebar">
+<label class="overlay sidebar-overlay" for="__navigation"></label>
+<label class="overlay toc-overlay" for="__toc"></label>
+
+<a class="skip-to-content muted-link" href="#furo-main-content">Skip to content</a>
+
+
+
+<div class="page">
+  <header class="mobile-header">
+    <div class="header-left">
+      <label class="nav-overlay-icon" for="__navigation">
+        <span class="icon"><svg><use href="#svg-menu"></use></svg></span>
+      </label>
+    </div>
+    <div class="header-center">
+      <a href="index.html"><div class="brand">pyATF: The Auto-Tuning Framework (ATF) in Python</div></a>
+    </div>
+    <div class="header-right">
+      <div class="theme-toggle-container theme-toggle-header">
+        <button class="theme-toggle" aria-label="Toggle Light / Dark / Auto color theme">
+          <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
+          <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
+          <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+          <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+        </button>
+      </div>
+      <label class="toc-overlay-icon toc-header-icon" for="__toc">
+        <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
+      </label>
+    </div>
+  </header>
+  <aside class="sidebar-drawer">
+    <div class="sidebar-container">
+      
+      <div class="sidebar-sticky"><a class="sidebar-brand" href="index.html">
+  
+  <span class="sidebar-brand-text">pyATF: The Auto-Tuning Framework (ATF) in Python</span>
+  
+</a><form class="sidebar-search-container" method="get" action="search.html" role="search">
+  <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
+  <input type="hidden" name="check_keywords" value="yes">
+  <input type="hidden" name="area" value="default">
+</form>
+<div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
+  <ul class="current">
+<li class="toctree-l1 current current-page"><a class="current reference internal" href="#">Getting Started</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="api_reference/index.html">API Reference</a><input aria-label="Toggle navigation of API Reference" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="api_reference/tuner_interface.html">Tuner</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api_reference/cost_functions.html">Cost Functions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api_reference/search_techniques.html">Search Techniques</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api_reference/abort_conditions.html">Abort Conditions</a></li>
+</ul>
+</li>
+</ul>
+
+</div>
+</div>
+
+      </div>
+      
+    </div>
+  </aside>
+  <div class="main">
+    <div class="content">
+      <div class="article-container">
+        <a href="#" class="back-to-top muted-link">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"></path>
+          </svg>
+          <span>Back to top</span>
+        </a>
+        <div class="content-icon-container">
+          <div class="view-this-page">
+  <a class="muted-link" href="_sources/getting_started.md.txt" title="View this page">
+    <svg><use href="#svg-eye"></use></svg>
+    <span class="visually-hidden">View this page</span>
+  </a>
+</div>
+<div class="theme-toggle-container theme-toggle-content">
+            <button class="theme-toggle" aria-label="Toggle Light / Dark / Auto color theme">
+              <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
+              <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
+              <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+              <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+            </button>
+          </div>
+          <label class="toc-overlay-icon toc-content-icon" for="__toc">
+            <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
+          </label>
+        </div>
+        <article role="main" id="furo-main-content">
+          <section id="getting-started">
+<h1>Getting Started<a class="headerlink" href="#getting-started" title="Link to this heading">¶</a></h1>
+<section id="installation">
+<h2>Installation<a class="headerlink" href="#installation" title="Link to this heading">¶</a></h2>
+<p>pyATF requires Python 3.9+ and can be installed using <code class="docutils literal notranslate"><span class="pre">pip</span></code>:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>pip install pyatf
+</pre></div>
+</div>
+<p>pyATF’s pre-implemented OpenCL and CUDA cost functions require additional packages to be installed:</p>
+<ul>
+<li><p>OpenCL cost function:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>pip install numpy pyopencl
+</pre></div>
+</div>
+<p>For the OpenCL cost function, a matching OpenCL runtime is also required, e.g., for Intel CPUs:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>pip install intel-opencl-rt
+</pre></div>
+</div>
+</li>
+<li><p>CUDA cost function:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>pip install numpy cuda-python
+</pre></div>
+</div>
+</li>
+</ul>
+</section>
+<section id="example-usage">
+<h2>Example Usage<a class="headerlink" href="#example-usage" title="Link to this heading">¶</a></h2>
+<p>We illustrate the basic usage of pyATF by auto-tuning the <code class="docutils literal notranslate"><span class="pre">saxpy</span></code> OpenCL kernel of the <a class="reference external" href="https://github.com/CNugteren/CLBlast">CLBlast</a> library, based on pyATF’s GPL-based C++ user interface.</p>
+<p>The kernel is implemented in CLBlast as follows:</p>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="n">__kernel</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="n">saxpy</span><span class="p">(</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">N</span><span class="p">,</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="n">a</span><span class="p">,</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="n">__global</span><span class="w"> </span><span class="kt">float</span><span class="o">*</span><span class="w"> </span><span class="n">x</span><span class="p">,</span><span class="w"> </span><span class="n">__global</span><span class="w"> </span><span class="kt">float</span><span class="o">*</span><span class="w"> </span><span class="n">y</span><span class="w"> </span><span class="p">)</span>
+<span class="p">{</span>
+<span class="w">    </span><span class="k">for</span><span class="p">(</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">w</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="w"> </span><span class="p">;</span><span class="w"> </span><span class="n">w</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">WPT</span><span class="w"> </span><span class="p">;</span><span class="w"> </span><span class="o">++</span><span class="n">w</span><span class="w"> </span><span class="p">)</span><span class="w"> </span>
+<span class="w">    </span><span class="p">{</span>
+<span class="w">        </span><span class="k">const</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">index</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">w</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">get_global_size</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">get_global_id</span><span class="p">(</span><span class="mi">0</span><span class="p">);</span>
+<span class="w">        </span><span class="n">y</span><span class="p">[</span><span class="w"> </span><span class="n">index</span><span class="w"> </span><span class="p">]</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="n">a</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">x</span><span class="p">[</span><span class="w"> </span><span class="n">index</span><span class="w"> </span><span class="p">];</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>It takes as arguments: the input size <code class="docutils literal notranslate"><span class="pre">N</span></code>, a floating point number <code class="docutils literal notranslate"><span class="pre">a</span></code>, and two <code class="docutils literal notranslate"><span class="pre">N</span></code>-sized vectors <code class="docutils literal notranslate"><span class="pre">x</span></code> and <code class="docutils literal notranslate"><span class="pre">y</span></code> of floating point numbers.
+The kernel computes for all <span class="math notranslate nohighlight">\(i\in[1,\texttt{N}]_\mathbb{N}\)</span>:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>y[ i ] = a * x[ i ] + y[ i ] 
+</pre></div>
+</div>
+<p>For simplicity, we removed in the kernel switching between single and double precision floating point numbers, as well as using OpenCL’s vector data types.</p>
+<p>To auto-tune a program with pyATF, the programmer has to perform three steps, as briefly outlined in the following.
+The complete pyATF code for <code class="docutils literal notranslate"><span class="pre">saxpy</span></code> is available <a class="reference external" href="https://github.com/atf-tuner/pyATF/blob/main/examples/full_examples/opencl__saxpy/opencl__saxpy.py">here</a>.</p>
+<section id="step-1-generate-the-search-space">
+<h3>Step 1: Generate the Search Space<a class="headerlink" href="#step-1-generate-the-search-space" title="Link to this heading">¶</a></h3>
+<p>pyATF automatically generates the search space for the user.
+For this, the user describes the space using tuning parameters, which are in this example:</p>
+<ol class="arabic simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">WPT</span></code> (<em>Work Per Thread</em>) – a parameter in the interval <span class="math notranslate nohighlight">\([1,\texttt{N}]_\mathbb{N}\)</span> that has to divide the input size <code class="docutils literal notranslate"><span class="pre">N</span></code>:</p></li>
+</ol>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">WPT</span> <span class="o">=</span> <span class="n">TP</span><span class="p">(</span> <span class="s1">&#39;WPT&#39;</span><span class="p">,</span> <span class="n">Interval</span><span class="p">(</span> <span class="mi">1</span><span class="p">,</span><span class="n">N</span> <span class="p">),</span> <span class="k">lambda</span> <span class="n">WPT</span><span class="p">:</span> <span class="n">N</span> <span class="o">%</span> <span class="n">WPT</span> <span class="o">==</span> <span class="mi">0</span> <span class="p">)</span>
+</pre></div>
+</div>
+<ol class="arabic simple" start="2">
+<li><p><code class="docutils literal notranslate"><span class="pre">LS</span></code> (<em>Local Size</em>) – a parameter in the interval <span class="math notranslate nohighlight">\([1,\texttt{N}]_\mathbb{N}\)</span> that has to divide the global size <code class="docutils literal notranslate"><span class="pre">N/WPT</span></code>:</p></li>
+</ol>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">LS</span> <span class="o">=</span> <span class="n">TP</span><span class="p">(</span> <span class="s1">&#39;LS&#39;</span><span class="p">,</span> <span class="n">Interval</span><span class="p">(</span> <span class="mi">1</span><span class="p">,</span><span class="n">N</span> <span class="p">),</span> <span class="k">lambda</span> <span class="n">WPT</span><span class="p">,</span> <span class="n">LS</span><span class="p">:</span> <span class="p">(</span><span class="n">N</span> <span class="o">/</span> <span class="n">WPT</span><span class="p">)</span> <span class="o">%</span> <span class="n">LS</span> <span class="o">==</span> <span class="mi">0</span> <span class="p">)</span>
+</pre></div>
+</div>
+<p>The pyATF user can set arbitrary constraints on tuning parameters.
+For this, pyATF allows using any arbitrary, user-defined Python lambda as constraint function that takes as input a value within tuning parameter’s range and returns either <code class="docutils literal notranslate"><span class="pre">true</span></code> (iff the constraint is satisfied) or <code class="docutils literal notranslate"><span class="pre">false</span></code> (iff the constraint is not satisfied).</p>
+<p>Interdependencies among tuning parameters are expressed in pyATF via constraints. For this, the constraint function is defined based on tuning parameters (which are defined in the constraint’s function definition as parameters and used in its body as variables). For example, the constraint function of parameter LS defines an additional parameter WPT to express that parameter LS has to divide the global size N/WPT. Note that a constraint’s parameter name has to exactly match the name of the corresponding tuning parameter to express interdependencies.</p>
+<p>pyATF’s parameter constraints are described in detail <a class="reference external" href="https://ieeexplore.ieee.org/abstract/document/8291912">here</a>.</p>
+</section>
+<section id="step-2-implement-a-cost-function">
+<h3>Step 2: Implement a Cost Function<a class="headerlink" href="#step-2-implement-a-cost-function" title="Link to this heading">¶</a></h3>
+<p>For high flexibility, the pyATF user can use any arbitrary, self-implemented cost function.
+pyATF allows as cost function any arbitrary Python function that takes as input a configuration of tuning parameters and returns a value for which operator <code class="docutils literal notranslate"><span class="pre">&lt;</span></code> is defined.
+pyATF interprets the cost function’s return value (e.g., program’s runtime) as the cost that has to be minimized during the auto-tuning process.</p>
+<p>For user’s convenience, pyATF provides pre-implemented cost functions for auto-tuning OpenCL and CUDA kernels in terms of runtime performance, because minimizing the runtime of OpenCL and CUDA applications is becoming increasingly important in the autotuning community.</p>
+<p>For our <code class="docutils literal notranslate"><span class="pre">saxpy</span></code> example, we use pyATF’s pre-implemented OpenCL cost function <code class="docutils literal notranslate"><span class="pre">opencl.CostFunction</span></code>, as follows:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">saxpy_kernel</span> <span class="o">=</span> <span class="n">opencl</span><span class="o">.</span><span class="n">Kernel</span><span class="p">(</span> <span class="n">opencl</span><span class="o">.</span><span class="n">source</span><span class="p">(</span><span class="n">saxpy_kernel_as_string</span><span class="p">),</span> <span class="s1">&#39;saxpy&#39;</span> <span class="p">)</span>  <span class="c1"># kernel&#39;s code &amp; name</span>
+
+<span class="n">cf_saxpy</span> <span class="o">=</span> <span class="n">opencl</span><span class="o">.</span><span class="n">CostFunction</span><span class="p">(</span> <span class="n">saxpy_kernel</span> <span class="p">)</span><span class="o">.</span><span class="n">platform_id</span><span class="p">(</span> <span class="mi">0</span> <span class="p">)</span>                                     \ <span class="c1"># OpenCL platform id</span>
+                                              <span class="o">.</span><span class="n">device_id</span><span class="p">(</span> <span class="mi">0</span> <span class="p">)</span>                                       \ <span class="c1"># OpenCL device id</span>
+                                              <span class="o">.</span><span class="n">kernel_args</span><span class="p">(</span> <span class="n">np</span><span class="o">.</span><span class="n">int32</span><span class="p">(</span> <span class="n">N</span> <span class="p">)</span>                        <span class="p">,</span>    <span class="c1"># N</span>
+                                                            <span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">random</span><span class="p">())</span>       <span class="p">,</span>    <span class="c1"># a</span>
+                                                            <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="n">N</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span> <span class="p">,</span>    <span class="c1"># x</span>
+                                                            <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="n">N</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span> <span class="p">)</span>  \ <span class="c1"># y</span>
+                                              <span class="o">.</span><span class="n">global_size</span><span class="p">(</span> <span class="k">lambda</span> <span class="n">WPT</span><span class="p">,</span> <span class="n">LS</span><span class="p">:</span> <span class="n">N</span><span class="o">/</span><span class="n">WPT</span> <span class="p">)</span>                 \ <span class="c1"># OpenCL global size                                   </span>
+                                              <span class="o">.</span><span class="n">local_size</span><span class="p">(</span> <span class="k">lambda</span> <span class="n">LS</span><span class="p">:</span> <span class="n">LS</span> <span class="p">)</span>                            <span class="c1"># OpenCL local size                                   </span>
+
+</pre></div>
+</div>
+<p>We first define the kernel straightforwardly as an pyATF OpenCL kernel object <code class="docutils literal notranslate"><span class="pre">opencl.Kernel</span></code>.
+Afterwards, we construct an pyATF OpenCL cost function object of type <code class="docutils literal notranslate"><span class="pre">opencl.CostFunction</span></code>, which we customize with:</p>
+<ol class="arabic simple">
+<li><p>target device’s OpenCL platform and device id</p></li>
+<li><p>the kernel’s arguments, which are in this example: the input size <code class="docutils literal notranslate"><span class="pre">N</span></code>, a random floating point number for <code class="docutils literal notranslate"><span class="pre">a</span></code> (random data is the default input in auto-tuning), and two <code class="docutils literal notranslate"><span class="pre">N</span></code>-sized buffers for <code class="docutils literal notranslate"><span class="pre">x</span></code> and <code class="docutils literal notranslate"><span class="pre">y</span></code> that are also filled with random floating point numbers;</p></li>
+<li><p>the OpenCL global and local size, which we chose as: <code class="docutils literal notranslate"><span class="pre">N/WPT</span></code> (global size) and <code class="docutils literal notranslate"><span class="pre">LS</span></code> (local size) – pyATF allows defining both sizes as Python lambdas that may contain tuning parameters in their definition for high experessivity.</p></li>
+</ol>
+<p>Correctness can be optionally validated in pyATF via function <code class="docutils literal notranslate"><span class="pre">check_result(</span> <span class="pre">gold_value</span> <span class="pre">)</span></code> which checks the <code class="docutils literal notranslate"><span class="pre">i</span></code>-th buffer against a NumPy array <code class="docutils literal notranslate"><span class="pre">gold_value</span></code>.
+Alternatively, the user can use instead of parameter <code class="docutils literal notranslate"><span class="pre">gold_value</span></code> a Python lambda <code class="docutils literal notranslate"><span class="pre">gold_function</span></code> that implements the computation of <em>gold</em> (e.g., when random data is used), as demonstrated <a class="reference external" href="https://github.com/atf-tuner/pyATF/blob/main/examples/feature_demonstration/result_check/result_check.py">here</a>.</p>
+</section>
+<section id="step-3-explore-the-search-space">
+<h3>Step 3: Explore the Search Space<a class="headerlink" href="#step-3-explore-the-search-space" title="Link to this heading">¶</a></h3>
+<p>The pyATF user explores the search space by creating an pyATF tuner object and customizing it with the <em>tuning parameters</em> and a <em>search technique</em>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">tuning_result</span> <span class="o">=</span> <span class="n">Tuner</span><span class="p">()</span><span class="o">.</span><span class="n">tuning_parameters</span><span class="p">(</span> <span class="n">WPT</span><span class="p">,</span> <span class="n">LS</span> <span class="p">)</span>       \
+                       <span class="o">.</span><span class="n">search_technique</span><span class="p">(</span> <span class="n">AUCBandit</span><span class="p">()</span> <span class="p">)</span>    \
+                       <span class="o">.</span><span class="n">tune</span><span class="p">(</span> <span class="n">cf_saxpy</span><span class="p">,</span> <span class="n">Evaluations</span><span class="p">(</span><span class="mi">50</span><span class="p">)</span> <span class="p">)</span>
+</pre></div>
+</div>
+<p>The tuning is started via function <code class="docutils literal notranslate"><span class="pre">tune</span></code> which takes as input the <em>cost function</em> (from Step 2) and an <em>abort condition</em> (in this example, testing 50 configurations).
+pyATF then automatically explores the search space and returns object <code class="docutils literal notranslate"><span class="pre">tuning_result</span></code> which contains: the best found configuration of tuning parameters, the cost of that configuration, etc.</p>
+<p>To reduce tuning time, pyATF allows exploiting actual program computations also for the exploration phase, by allowing the user program to explicitly guide the exploration process.
+This is in particular beneficial for iterative applications, where the code part to tune is called repeatedly in the program flow, allowing benefiting from the calls also for exploration.
+For this, pyATF provides function <code class="docutils literal notranslate"><span class="pre">make_step</span></code> which is used as an alternative to function <code class="docutils literal notranslate"><span class="pre">tune</span></code>, as demonstrated <a class="reference external" href="https://github.com/atf-tuner/pyATF/blob/main/examples/feature_demonstration/program_guided_tuning/program_guided_tuning.py">here</a>.</p>
+</section>
+<section id="search-techniques">
+<h3>Search Techniques<a class="headerlink" href="#search-techniques" title="Link to this heading">¶</a></h3>
+<p>pyATF currently provides the following, pre-implemented search techniques:</p>
+<p><em>Basic Search Techniques:</em></p>
+<ol class="arabic simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">Exhaustive</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">Random</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">SimulatedAnnealing</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">DifferentialEvolution</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">PatternSearch</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">Torczon</span></code></p></li>
+</ol>
+<p><em>Meta Search Techniques:</em></p>
+<ol class="arabic simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">RoundRobin</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">AUCBandit</span></code> (recommended as default)</p></li>
+</ol>
+<p>Further techniques can be easily added to pyATF by implementing a straightforward <a class="reference external" href="https://github.com/atf-tuner/pyATF/blob/main/src/pyatf/search_techniques/search_technique.py">interface</a>.</p>
+</section>
+<section id="abort-conditions">
+<h3>Abort Conditions<a class="headerlink" href="#abort-conditions" title="Link to this heading">¶</a></h3>
+<p>pyATF currently provides the following, pre-implemented abort conditions:</p>
+<ol class="arabic simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">Duration(</span> <span class="pre">timedelta(t)</span> <span class="pre">)</span></code>: stops exploration after a user-defined time interval <code class="docutils literal notranslate"><span class="pre">t</span></code>; here, <code class="docutils literal notranslate"><span class="pre">timedelta</span></code> is part of Python’s <a class="reference external" href="https://docs.python.org/3/library/datetime.html">datetime module</a> and thus <code class="docutils literal notranslate"><span class="pre">t</span></code> can be <code class="docutils literal notranslate"><span class="pre">hours=2</span></code> or <code class="docutils literal notranslate"><span class="pre">hours=2,minutes=30</span></code>, etc.;</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">Evaluations(</span> <span class="pre">n</span> <span class="pre">)</span></code>: stops after <code class="docutils literal notranslate"><span class="pre">n</span></code> tested configurations;</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">Fraction(</span> <span class="pre">f</span> <span class="pre">)</span></code>: stops after <code class="docutils literal notranslate"><span class="pre">f*S</span></code> tested configurations, where <code class="docutils literal notranslate"><span class="pre">f</span></code> is a floating point number in <code class="docutils literal notranslate"><span class="pre">[0,1]</span></code> and <code class="docutils literal notranslate"><span class="pre">S</span></code> the search space size;</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">Cost(</span> <span class="pre">c</span> <span class="pre">)</span></code>: stops when a configuration with a cost <code class="docutils literal notranslate"><span class="pre">&lt;=c</span></code> has been found;</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">Speedup(</span> <span class="pre">s,timedelta(t)</span> <span class="pre">)</span></code>: stops when within the last time interval <code class="docutils literal notranslate"><span class="pre">t</span></code> the cost could not be lowered by a factor <code class="docutils literal notranslate"><span class="pre">&gt;=s</span></code>;</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">Speedup(</span> <span class="pre">s,n</span> <span class="pre">)</span></code>: stops when within the last <code class="docutils literal notranslate"><span class="pre">n</span></code> tested configurations the cost could not be lowered by a factor <code class="docutils literal notranslate"><span class="pre">&gt;=s</span></code>.</p></li>
+</ol>
+<p>If no abort condition is set, pyATF uses <code class="docutils literal notranslate"><span class="pre">Evaluations(</span> <span class="pre">S</span> <span class="pre">)</span></code>, where <code class="docutils literal notranslate"><span class="pre">S</span></code> is the search space size.</p>
+<p>To meet complex user requirements, abort conditions can be combined by using the logical operators <code class="docutils literal notranslate"><span class="pre">And</span></code> and <code class="docutils literal notranslate"><span class="pre">Or</span></code>, e.g., <code class="docutils literal notranslate"><span class="pre">Or(</span> <span class="pre">Evaluations(100)</span> <span class="pre">,</span> <span class="pre">Duration(minutes=5)</span> <span class="pre">)</span></code> to stop tuning after 100 evaluations or 5 minutes, whichever comes first.</p>
+<p>New abort conditions can be easily added to pyATF by implementing the corresponding <a class="reference external" href="https://github.com/atf-tuner/pyATF/blob/main/src/pyatf/abort_conditions/abort_condition.py">interface</a>.</p>
+</section>
+</section>
+<section id="experimental-results">
+<h2>Experimental Results<a class="headerlink" href="#experimental-results" title="Link to this heading">¶</a></h2>
+<p>We present experimental results (discussed in detail <a class="reference external" href="https://dl.acm.org/doi/abs/10.1145/3427093">here</a>) for <a class="reference external" href="https://ieeexplore.ieee.org/abstract/document/8891668?casa_token=mFNVnD2FYXMAAAAA:1DvXQy-Rl1Tm2eiYjaImBEylR0u-eHm-TbtyRs_yIgTdPKVpe5NhsPS-H414i0_ToRfVZyBdexsB">MDH-based auto-tunable computations</a> from popular domains:
+<em>Stencil</em>,
+<em>BLAS</em> (Basic Linear Algebra Subroutines),
+<em>Quantum Chemistry</em>, and
+<em>Data Mining</em>.
+In particular, we show that pyATF is able to auto-tune the computations to higher performance than <a class="reference external" href="https://github.com/CNugteren/CLTune">CLTune</a> which is an auto-tuning approach that also supports interdependencies among tuning parameters:</p>
+<br>
+<p><img alt="Experimental Results" src="_images/atf_experiments.png" /></p>
+<br>
+<p>The figure shows runtimes (lower is better) of <a class="reference external" href="https://ieeexplore.ieee.org/abstract/document/8891668?casa_token=mFNVnD2FYXMAAAAA:1DvXQy-Rl1Tm2eiYjaImBEylR0u-eHm-TbtyRs_yIgTdPKVpe5NhsPS-H414i0_ToRfVZyBdexsB">implementations</a> on CPU (top part of the figure) and GPU (bottom part) when auto-tuned with pyATF (black bars) as compared to auto-tuning the implementations using CLTune (gray bars).
+We also compare to well-performing high-performance libraries which are often optimized by hand (red bars): <a class="reference external" href="https://oneapi-src.github.io/oneDNN/v0/index.html">MKL-DNN v0.21.5</a>, <a class="reference external" href="https://www.intel.com/content/www/us/en/develop/documentation/get-started-with-mkl-for-dpcpp/top.html">MKL v2020</a>, <a class="reference external" href="https://developer.nvidia.com/cudnn">cuDNN v7.6.5</a>, <a class="reference external" href="https://developer.nvidia.com/cublas">cuBLAS v10.2.</a>, <a class="reference external" href="https://github.com/facebookresearch/TensorComprehensions">Tensor Comprehensions (TC)</a>, and <a class="reference external" href="https://dl.acm.org/doi/abs/10.1145/3297280.3297330?casa_token=Dg8tuKQMslUAAAAA:_0zipZ0ancafufunFVr9ygnETPlYpg5vNgNfyAsGxGEYsIWzTbTBF5Nosq6PhYFzOthvFSPPZGaB">EKR</a>.</p>
+</section>
+<section id="citations">
+<h2>Citations<a class="headerlink" href="#citations" title="Link to this heading">¶</a></h2>
+<p>Please use the following citation, when referring to ATF’s:</p>
+<ol class="arabic simple">
+<li><p><strong>Internal Design &amp; Implementation</strong></p></li>
+</ol>
+<div class="highlight-latex notranslate"><div class="highlight"><pre><span></span>@article<span class="nb">{</span>10.1145/3427093, 
+  author = <span class="nb">{</span>Rasch, Ari and Schulze, Richard and Steuwer, Michel and Gorlatch, Sergei<span class="nb">}</span>,
+  title = <span class="nb">{</span>Efficient Auto-Tuning of Parallel Programs with Interdependent Tuning Parameters via Auto-Tuning Framework (ATF)<span class="nb">}</span>,
+  year = <span class="nb">{</span>2021<span class="nb">}</span>,
+  issue<span class="nb">_</span>date = <span class="nb">{</span>March 2021<span class="nb">}</span>,
+  publisher = <span class="nb">{</span>Association for Computing Machinery<span class="nb">}</span>,
+  address = <span class="nb">{</span>New York, NY, USA<span class="nb">}</span>,
+  volume = <span class="nb">{</span>18<span class="nb">}</span>,
+  number = <span class="nb">{</span>1<span class="nb">}</span>,
+  issn = <span class="nb">{</span>1544-3566<span class="nb">}</span>,
+  url = <span class="nb">{</span>https://doi.org/10.1145/3427093<span class="nb">}</span>,
+  doi = <span class="nb">{</span>10.1145/3427093<span class="nb">}</span>,
+  journal = <span class="nb">{</span>ACM Trans. Archit. Code Optim.<span class="nb">}</span>,
+  month = <span class="nb">{</span>jan<span class="nb">}</span>,
+  articleno = <span class="nb">{</span>1<span class="nb">}</span>,
+  numpages = <span class="nb">{</span>26<span class="nb">}</span>,
+  keywords = <span class="nb">{</span>parallel programs, Auto-tuning, interdependent tuning parameters<span class="nb">}</span>
+<span class="nb">}</span>
+</pre></div>
+</div>
+<br>
+<ol class="arabic simple" start="2">
+<li><p><strong>DSL-Based Interface</strong></p></li>
+</ol>
+<div class="highlight-latex notranslate"><div class="highlight"><pre><span></span>@article<span class="nb">{</span>https://doi.org/10.1002/cpe.4423,
+  author = <span class="nb">{</span>Rasch, Ari and Gorlatch, Sergei<span class="nb">}</span>,
+  title = <span class="nb">{</span>ATF: A generic directive-based auto-tuning framework<span class="nb">}</span>,
+  journal = <span class="nb">{</span>Concurrency and Computation: Practice and Experience<span class="nb">}</span>,
+  volume = <span class="nb">{</span>31<span class="nb">}</span>,
+  number = <span class="nb">{</span>5<span class="nb">}</span>,
+  pages = <span class="nb">{</span>e4423<span class="nb">}</span>,
+  keywords = <span class="nb">{</span>auto-tuning, CLBlast, CLTune, CUDA, dependent tuning parameters, GEMM, many-core, multi-core, multi-objective auto-tuning, OpenCL, OpenTuner, tuning parameter constraints<span class="nb">}</span>,
+  doi = <span class="nb">{</span>https://doi.org/10.1002/cpe.4423<span class="nb">}</span>,
+  url = <span class="nb">{</span>https://onlinelibrary.wiley.com/doi/abs/10.1002/cpe.4423<span class="nb">}</span>,
+  eprint = <span class="nb">{</span>https://onlinelibrary.wiley.com/doi/pdf/10.1002/cpe.4423<span class="nb">}</span>,
+  note = <span class="nb">{</span>e4423 cpe.4423<span class="nb">}</span>,
+  year = <span class="nb">{</span>2019<span class="nb">}</span>
+<span class="nb">}</span>
+</pre></div>
+</div>
+<br>
+<ol class="arabic simple" start="3">
+<li><p><strong>GPL-Based</strong>:</p></li>
+</ol>
+<ul class="simple">
+<li><p><em>C++ Interface</em></p></li>
+</ul>
+<div class="highlight-latex notranslate"><div class="highlight"><pre><span></span>@INPROCEEDINGS<span class="nb">{</span>8291912,
+  author=<span class="nb">{</span>Rasch, Ari and Haidl, Michael and Gorlatch, Sergei<span class="nb">}</span>,
+  booktitle=<span class="nb">{</span>2017 IEEE 19th International Conference on High Performance Computing and Communications; IEEE 15th International Conference on Smart City; IEEE 3rd International Conference on Data Science and Systems (HPCC/SmartCity/DSS)<span class="nb">}</span>, 
+  title=<span class="nb">{</span>ATF: A Generic Auto-Tuning Framework<span class="nb">}</span>, 
+  year=<span class="nb">{</span>2017<span class="nb">}</span>,
+  volume=<span class="nb">{}</span>,
+  number=<span class="nb">{}</span>,
+  pages=<span class="nb">{</span>64-71<span class="nb">}</span>,
+  doi=<span class="nb">{</span>10.1109/HPCC-SmartCity-DSS.2017.9<span class="nb">}</span>
+<span class="nb">}</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li><p><em>Python Interface</em></p></li>
+</ul>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>Comming soon!
+</pre></div>
+</div>
+</section>
+</section>
+
+        </article>
+      </div>
+      <footer>
+        
+        <div class="related-pages">
+          <a class="next-page" href="api_reference/index.html">
+              <div class="page-info">
+                <div class="context">
+                  <span>Next</span>
+                </div>
+                <div class="title">API Reference</div>
+              </div>
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+            </a>
+          <a class="prev-page" href="index.html">
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+              <div class="page-info">
+                <div class="context">
+                  <span>Previous</span>
+                </div>
+                
+                <div class="title">Home</div>
+                
+              </div>
+            </a>
+        </div>
+        <div class="bottom-of-page">
+          <div class="left-details">
+            <div class="copyright">
+                Copyright &#169; 2024, Ari Rasch, Richard Schulze
+            </div>
+            Made with <a href="https://www.sphinx-doc.org/">Sphinx</a> and <a class="muted-link" href="https://pradyunsg.me">@pradyunsg</a>'s
+            
+            <a href="https://github.com/pradyunsg/furo">Furo</a>
+            
+          </div>
+          <div class="right-details">
+            
+          </div>
+        </div>
+        
+      </footer>
+    </div>
+    <aside class="toc-drawer">
+      
+      
+      <div class="toc-sticky toc-scroll">
+        <div class="toc-title-container">
+          <span class="toc-title">
+            On this page
+          </span>
+        </div>
+        <div class="toc-tree-container">
+          <div class="toc-tree">
+            <ul>
+<li><a class="reference internal" href="#">Getting Started</a><ul>
+<li><a class="reference internal" href="#installation">Installation</a></li>
+<li><a class="reference internal" href="#example-usage">Example Usage</a><ul>
+<li><a class="reference internal" href="#step-1-generate-the-search-space">Step 1: Generate the Search Space</a></li>
+<li><a class="reference internal" href="#step-2-implement-a-cost-function">Step 2: Implement a Cost Function</a></li>
+<li><a class="reference internal" href="#step-3-explore-the-search-space">Step 3: Explore the Search Space</a></li>
+<li><a class="reference internal" href="#search-techniques">Search Techniques</a></li>
+<li><a class="reference internal" href="#abort-conditions">Abort Conditions</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#experimental-results">Experimental Results</a></li>
+<li><a class="reference internal" href="#citations">Citations</a></li>
+</ul>
+</li>
+</ul>
+
+          </div>
+        </div>
+      </div>
+      
+      
+    </aside>
+  </div>
+</div><script src="_static/documentation_options.js?v=5929fcd5"></script>
+    <script src="_static/doctools.js?v=9bcbadda"></script>
+    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/scripts/furo.js?v=46bd48cc"></script>
+    <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    </body>
+</html>
