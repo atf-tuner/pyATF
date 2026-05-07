@@ -137,7 +137,7 @@ class SearchSpace:
                 empty = ' ' * ceil((1 - progress) * 79)
                 line = (f'\rgenerating search space: |{filled}{empty}|'
                         f' {progress * 100:6.2f}% {elapsed_time_str} (ETA: {eta_str})')
-                print(line, end='')
+                print(line, end='', flush=True)
 
         # generate chain of trees: one tree per independent parameter group
         # TODO: replace children with single node containing TP range,
@@ -233,7 +233,7 @@ class SearchSpace:
                     self._cot.append(tree)
                     self._constrained_size *= num_leafs
                     self._num_leafs.append(num_leafs)
-                print('')
+                print('', flush=True)
             else:
                 # enable 1D access, no progress prints
                 for tp_group_idx, tp_group in enumerate(independent_tp_groups):
@@ -362,7 +362,7 @@ class SearchSpace:
                     progress_printer(finished_iterations / total_iterations)
                     self._cot.append(tree)
                     self._constrained_size *= num_leafs
-                print('')
+                print('', flush=True)
             else:
                 # no 1D access, no progress prints
                 for tp_group_idx, tp_group in enumerate(independent_tp_groups):

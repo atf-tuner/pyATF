@@ -150,11 +150,11 @@ class Tuner:
                 line_length = len(line)
                 if line_length < self._last_line_length:
                     line += ' ' * (self._last_line_length - line_length)
-                print(line)
+                print(line, flush=True)
             if progress is None:
                 spinner_char = ('-', '\\', '|', '/')[(elapsed_ns // 500000000) % 4]
                 line = f'\rTuning: {spinner_char} {elapsed_time_str}\r'
-                print(line, end='')
+                print(line, end='', flush=True)
             else:
                 if now > self._tuning_start_ns and progress > 0:
                     eta_seconds = ceil(((now - self._tuning_start_ns) / progress
@@ -168,7 +168,7 @@ class Tuner:
                 empty = ' ' * ceil((1 - progress) * 80)
                 line = (f'\rexploring search space: |{filled}{empty}|'
                         f' {progress * 100:6.2f}% {elapsed_time_str} (ETA: {eta_str})')
-                print(line, end='')
+                print(line, end='', flush=True)
             self._last_line_length = len(line)
 
         def initialize(self):
@@ -211,7 +211,7 @@ class Tuner:
                 cost = self._cost_function(config)
             except CostFunctionError as e:
                 if self._verbosity >= 3:
-                    print('\r' + ' ' * self._last_line_length + '\r', end='')
+                    print('\r' + ' ' * self._last_line_length + '\r', end='', flush=True)
                     print('Error raised: ' + e.message)
                     self._last_line_length = 0
                 cost = None
@@ -244,7 +244,7 @@ class Tuner:
                 self._log_file = None
 
             if self._verbosity >= 1:
-                print('\nfinished tuning')
+                print('\nfinished tuning', flush=True)
                 if self._verbosity >= 2:
                     if self._tuning_data.min_cost() is not None:
                         print('best configuration:')
